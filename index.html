@@ -14,27 +14,29 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script>
+     <script>
     // 1. Blokir Klik Kanan (Context Menu)
     document.addEventListener("contextmenu", e => e.preventDefault());
     
-    // 2. Blokir Shortcut Keyboard (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U, Ctrl+S)
+    // 2. Blokir Shortcut Keyboard (F12, Ctrl+Shift+I, Cmd+Opt+I, Ctrl+U, dll)
     document.onkeydown = function(e) {
         if (
             e.keyCode === 123 || // F12
-            (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 67 || e.keyCode === 74)) || // Inspect Element
-            (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) // View Source & Save
+            (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 67 || e.keyCode === 74)) || // Windows/Linux: Ctrl+Shift+I/C/J
+            (e.metaKey && e.altKey && (e.keyCode === 73 || e.keyCode === 67 || e.keyCode === 74)) || // Mac: Cmd+Option+I/C/J
+            (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) || // Windows: Ctrl+U / Ctrl+S
+            (e.metaKey && (e.keyCode === 85 || e.keyCode === 83))    // Mac: Cmd+U / Cmd+S
         ) {
             e.preventDefault();
             return false;
         }
     };
     
-    // 3. Debugger Trap (Membuat DevTools freeze jika dipaksa buka dengan cara lain)
+    // 3. Debugger Trap (Membuat DevTools freeze jika dipaksa buka lewat menu browser)
     setInterval(() => { 
         try { (function() { return false; }['constructor']('debugger')()); } catch(e) {} 
     }, 100);
-</script>
+    </script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
