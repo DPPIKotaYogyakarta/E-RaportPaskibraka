@@ -1,4 +1,4 @@
-// GANTI INI DENGAN URL WEB APP DARI GOOGLE SCRIPT (Langkah 1)
+// URL WEB APP DARI GOOGLE SCRIPT (Sudah terpasang milik Anda)
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxKsu_iRGm0xk9m03j9OeCyeNsz1Ze7-F8bJL7t4PgnsFGlKnkGZWR4MAEOXz82C9hnng/exec";
 
 window.api = {
@@ -77,14 +77,15 @@ window.MediaModal = function({ src, badgeText, badgeClass, onClose }) {
     );
 }
 
+// === FIX SYNTAX ERROR DI BAWAH INI ===
 window.PasswordDisplay = function({ password }) {
-    const [show, ReactuseState] = ReactuseState(false);
+    const [show, setShow] = React.useState(false);
     return (
         <div className="flex justify-between items-center w-full">
             <span className={show ? "font-mono font-bold text-white drop-shadow-md" : "font-mono font-bold text-slate-500"}>
                 {show ? password : "••••••••"}
             </span>
-            <button onClick={() => React.useState(!show)} className="text-xs text-gold-primary hover:text-white transition drop-shadow-md"><i className={`fas ${show ? 'fa-eye-slash' : 'fa-eye'}`}></i></button>
+            <button onClick={() => setShow(!show)} className="text-xs text-gold-primary hover:text-white transition drop-shadow-md"><i className={`fas ${show ? 'fa-eye-slash' : 'fa-eye'}`}></i></button>
         </div>
     );
 }
@@ -100,6 +101,11 @@ window.StatusBadge = function({ status }) {
 window.FullProfileCard = function({ user, type }) {
     const isPaskib = type === 'paskibraka';
     const badgeClass = isPaskib ? window.getBadgeClass(user.penugasan) : 'badge-gold';
+    
+    // Gunakan dari window object
+    const StatusBadge = window.StatusBadge;
+    const PasswordDisplay = window.PasswordDisplay;
+
     return (
         <div className="space-y-3 text-sm animate-in">
             <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden shadow-lg backdrop-blur-sm">
@@ -109,7 +115,7 @@ window.FullProfileCard = function({ user, type }) {
                     <div className="flex justify-between border-b border-white/5 pb-2"><span className="text-slate-400">{isPaskib ? 'NIK' : 'Username'}</span><span className="font-bold text-white drop-shadow">{isPaskib ? user.nik : user.username}</span></div>
                     <div className="flex justify-between border-b border-white/5 pb-2"><span className="text-slate-400">Nama Lengkap</span><span className="font-bold text-white text-right drop-shadow">{user.nama}</span></div>
                     <div className="flex justify-between border-b border-white/5 pb-2"><span className="text-slate-400">Nama Lapangan</span><span className="font-bold text-gold-gradient">{user.lapangan}</span></div>
-                    <div className="flex justify-between items-center"><span className="text-slate-400">Status Akun</span><window.StatusBadge status={user.status} /></div>
+                    <div className="flex justify-between items-center"><span className="text-slate-400">Status Akun</span><StatusBadge status={user.status} /></div>
                 </div>
             </div>
             <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden shadow-lg backdrop-blur-sm">
@@ -120,7 +126,7 @@ window.FullProfileCard = function({ user, type }) {
                     ) : (
                         <div className="flex justify-between items-center border-b border-white/5 pb-2"><span className="text-slate-400">Jabatan</span><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${badgeClass} badge-base`}>{user.jabatan}</span></div>
                     )}
-                    <div className="flex flex-col gap-1"><span className="text-slate-400 text-xs">Password</span><div className="bg-black/30 p-2 rounded border border-white/5 inner-shadow"><window.PasswordDisplay password={user.password} /></div></div>
+                    <div className="flex flex-col gap-1"><span className="text-slate-400 text-xs">Password</span><div className="bg-black/30 p-2 rounded border border-white/5 inner-shadow"><PasswordDisplay password={user.password} /></div></div>
                 </div>
             </div>
         </div>
