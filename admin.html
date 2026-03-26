@@ -24,6 +24,19 @@
         function AdminApp() {
             const [user, setUser] = useState(null); const [view, setView] = useState('home'); const [lightboxData, setLightboxData] = useState(null);
             const [dashboardCache, setDashboardCache] = useState(null); const [autoSync, setAutoSync] = useState(false); 
+            
+            // --- FIX BLANK SCREEN ---
+            const [isReady, setIsReady] = useState(false);
+            useEffect(() => {
+                let attempts = 0;
+                const timer = setInterval(() => {
+                    attempts++;
+                    if (window.Background3D && window.api) {
+                        setIsReady(true); clearInterval(timer);
+                    } else if (attempts > 100) { clearInterval(timer); alert("Gagal memuat shared.js."); }
+                }, 100);
+                return () => clearInterval(timer);
+            }, []);
 
             useEffect(() => {
                 const stored = localStorage.getItem('currentUser');
@@ -42,7 +55,8 @@
                 catch(e) { console.error(e); alert("Gagal memuat riwayat bintang"); }
             };
 
-            if (!user) return <div className="flex h-screen items-center justify-center"><div className="loader"></div></div>;
+            // JIKA BELUM READY, TAMPILKAN LOADER
+            if (!isReady || !user) return <div className="min-h-screen flex flex-col items-center justify-center bg-[#050505]"><div className="loader mb-4"></div><p className="text-[#FFD700] text-xs font-bold tracking-widest animate-pulse">SINKRONISASI DATA...</p></div>;
 
             return (
                  <div className="min-h-screen flex flex-col items-center justify-center p-4">
