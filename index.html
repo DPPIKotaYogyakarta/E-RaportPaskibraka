@@ -6,7 +6,7 @@
     <title>Login - Raport Paskibraka</title>
     
     <!-- ========================================== -->
-    <!-- MULAI DARI SINI ADALAH ISI DARI SHARED.HTML -->
+    <!-- SHARED CSS & LIBRARIES -->
     <!-- ========================================== -->
     <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/a/a0/Logo_dppi_512.png">
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
@@ -38,7 +38,6 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .animate-in { animation: fadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; } .custom-scrollbar::-webkit-scrollbar-track { background: transparent; } .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; } .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: var(--gold-primary); }
         
         /* Biometric Animations */
         .biometric-scanner-overlay {
@@ -69,6 +68,9 @@
         }
         @keyframes faceScan { from { top: 10%; opacity: 0.5; } to { top: 90%; opacity: 1; } }
     </style>
+</head>
+<body>
+    <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect } = React;
@@ -76,35 +78,54 @@
         const LOGO_YOGYA = "https://upload.wikimedia.org/wikipedia/commons/d/db/Logo_Pemkot_Yk.png"; 
         const LOGO_PASKIB = "https://upload.wikimedia.org/wikipedia/commons/d/dc/Logo_paskibraka.png";
 
-        // --- KONFIGURASI API GITHUB PAGES ---
-        // PENTING: Ganti URL di bawah ini dengan URL hasil Deploy "Web App" dari Google Apps Script Anda!
+        // =================================================================================
+        // MASUKKAN URL HASIL "NEW DEPLOYMENT" DI SINI:
+        // =================================================================================
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby-SDIVGlVnxO8e1H34gmo_R_C3v1bvJlv6X-wIfzGUmIbqwTapwQaKhDufzF7AOW6dcg/exec";
 
-        // --- API BRIDGE ---
+        // --- SISTEM DETEKSI ERROR CANGGIH ---
         const api = {
             run: async (funcName, payload = {}) => {
                 return new Promise(async (resolve, reject) => {
                     try {
                         const response = await fetch(GAS_WEB_APP_URL, {
-                            method: "POST", redirect: "follow",
+                            method: "POST", 
+                            redirect: "follow",
                             headers: { "Content-Type": "text/plain;charset=utf-8" },
                             body: JSON.stringify({ action: funcName, payload: payload })
                         });
-                        const result = await response.json();
+
+                        const rawText = await response.text();
+                        let result;
+                        
+                        try {
+                            result = JSON.parse(rawText);
+                        } catch (parseError) {
+                            console.error("Respons dari Server Bukan JSON:", rawText);
+                            // Deteksi jika Google memblokir akses dan mengembalikan halaman login/HTML
+                            if (rawText.toLowerCase().includes("<html") || rawText.includes("accounts.google.com")) {
+                                reject("❌ ERROR HAK AKSES:\n\nGoogle menolak koneksi. Silakan buka file Google Script Anda, lalu Deploy ulang:\n\n1. Klik Deploy -> New Deployment\n2. Execute as: Me\n3. Who has access: ANYONE (Sangat Penting!)\n4. Copy link baru dan masukkan ke dalam file index.html");
+                            } else {
+                                reject("❌ ERROR SERVER SCRIPT:\n\nGoogle Script Anda tidak mengembalikan data JSON. Pastikan Anda sudah menyimpan Kode.gs terbaru.");
+                            }
+                            return;
+                        }
+                        
                         if (result.status === 'success' || result.status === 'error') {
                             if(result.status === 'error') reject(result.message);
                             else resolve(result.data !== undefined ? result.data : result);
                         } else {
                             resolve(result);
                         }
+
                     } catch (error) {
-                        reject("Gagal terhubung ke server database.");
+                        console.error("API Error Fetch:", error);
+                        reject(`❌ KONEKSI GAGAL (${error.message}):\n\nPastikan URL di atas benar (harus berakhiran /exec) dan perangkat Anda terhubung ke internet.`);
                     }
                 });
             }
         };
 
-        // --- SHARED COMPONENTS ---
         function Background3D() {
             return (
                 <>
@@ -113,16 +134,10 @@
                 </>
             );
         }
-    </script>
-    <!-- ========================================== -->
-    <!-- AKHIR DARI SHARED.HTML -->
-    <!-- ========================================== -->
-</head>
-<body>
-    <div id="root"></div>
-    <script type="text/babel">
-        const { useState, useEffect } = React;
 
+        // ==========================================
+        // APP LOGIN UTAMA
+        // ==========================================
         function LoginApp() {
             const [view, setView] = useState('login');
             const [loading, setLoading] = useState(false);
@@ -130,30 +145,24 @@
             const handleLogin = async (username, password, type) => {
                 setLoading(true);
                 try {
-                    // API Call disesuaikan format fetch() yang baru di Shared
                     const res = await api.run('login', { username, password, type }); 
                     
-                    // Karena api.run yang baru langsung meresolve data jika sukses
-                    // Kita asumsikan res adalah { data: userObj, role: ... } jika login berhasil
-                    
-                    // SIMPAN DATA USER KE SESSION BROWSER
                     localStorage.setItem('currentUser', JSON.stringify({
-                        data: res, // Di versi API baru, res adalah object user
+                        data: res, 
                         role: res.role || type
                     }));
                     
-                    // REDIRECT KE HALAMAN SPESIFIK BERDASARKAN ROLE DI GITHUB PAGES (.html)
-                    let targetPage = 'index.html'; // Default ke diri sendiri jika gagal route
+                    let targetPage = 'index.html'; 
                     if(res.role === 'admin' || type === 'admin') targetPage = 'admin.html';
                     else if(type === 'paskibraka' || res.role === 'paskibraka') targetPage = 'paskibraka.html';
                     else targetPage = 'pelatih.html';
 
-                    // PINDAH HALAMAN (Gunakan href standar tanpa getScriptUrl)
                     window.location.href = targetPage;
                     
                 } catch (e) {
                     console.error(e);
-                    alert(typeof e === 'string' ? e : "Terjadi kesalahan koneksi.");
+                    // Menampilkan pesan alert yang sangat spesifik dari sistem pendeteksi di atas
+                    alert(typeof e === 'string' ? e : "Terjadi kesalahan sistem yang tidak diketahui.");
                 }
                 setLoading(false);
             };
@@ -177,7 +186,6 @@
             const [form, setForm] = useState({ user: '', pass: '' }); 
             const [showPass, setShowPass] = useState(false); 
             
-            // STATE KHUSUS BIOMETRIK
             const [bioEnabled, setBioEnabled] = useState(false);
             const [savedCreds, setSavedCreds] = useState(null); 
             const [isBiometricActive, setIsBiometricActive] = useState(false);
@@ -197,7 +205,6 @@
 
             const handleBiometricLogin = (type) => {
                 if (!savedCreds) return alert("Sesi tidak valid. Silakan login manual sekali lagi.");
-                
                 setBiometricType(type);
                 setIsBiometricActive(true); 
 
@@ -209,8 +216,6 @@
 
             return (
                 <div className="os-window p-8 rounded-[2rem] animate-in text-center relative overflow-hidden">
-                    
-                    {/* OVERLAY ANIMASI SCANNER */}
                     {isBiometricActive && (
                         <div className="biometric-scanner-overlay animate-in">
                             <div className="flex flex-col items-center">
@@ -249,7 +254,6 @@
                     <div className="flex p-1 bg-black/40 rounded-xl mb-6 border border-white/10 inner-shadow">{['paskibraka', 'pelatih', 'admin'].map(t => (<button key={t} disabled={loading} onClick={() => setTab(t)} className={`flex-1 py-2 text-xs font-bold uppercase rounded-lg transition-all ${tab === t ? 'bg-gradient-to-r from-[#D4AF37] to-[#FFD700] text-black shadow-[0_0_15px_rgba(212,175,55,0.5)]' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>{t}</button>))}</div>
                     <div className="space-y-4 text-left"><div className="relative"><i className="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i><input type="text" disabled={loading} placeholder={tab === 'paskibraka' ? "NIK Paskibraka" : "Username"} className="w-full pl-10 pr-4 py-3 os-input rounded-xl text-sm font-medium" value={form.user} onChange={e => setForm({...form, user: e.target.value})} /></div><div className="relative"><i className="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i><input type={showPass ? "text" : "password"} disabled={loading} placeholder="Password" className="w-full pl-10 pr-10 py-3 os-input rounded-xl text-sm font-medium" value={form.pass} onChange={e => setForm({...form, pass: e.target.value})} /><button type="button" disabled={loading} onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-gold-primary transition"><i className={`fas ${showPass ? 'fa-eye-slash' : 'fa-eye'}`}></i></button></div><button onClick={() => onLogin(form.user, form.pass, tab)} disabled={loading} className="w-full btn-gold py-3 rounded-xl text-sm font-black uppercase tracking-widest mt-4 flex justify-center items-center gap-2">{loading ? <div className="loader w-4 h-4"></div> : "LOGIN SYSTEM"}</button></div>
                     
-                    {/* TOMBOL PILIHAN BIOMETRIK */}
                     {bioEnabled && savedCreds && savedCreds.role === tab && (
                         <div className="mt-6 pt-6 border-t border-white/10 animate-in">
                             <p className="text-[10px] text-slate-400 mb-3 uppercase tracking-widest font-bold">Atau login cepat dengan</p>
