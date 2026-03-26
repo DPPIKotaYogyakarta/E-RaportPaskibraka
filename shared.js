@@ -86,7 +86,7 @@
 
     // --- KONFIGURASI API GITHUB PAGES ---
     // PENTING: Ganti URL di bawah ini dengan URL hasil Deploy "Web App" dari Google Apps Script Anda!
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw9FW3ozsyblKLq61S_y8_AMCGxMogtY0YVpZ9tLuEDmvi_UOXG_XzE8qHY4bEVtDaf/exec"; // CONTOH, GANTI DENGAN MILIK ANDA
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzj-eM_iDqH0jKCbwsy80w5ub-z3iY4lvlNVAN39lSpwHeGK5ZwSuNFguVaEcDIOdJx/exec"; // CONTOH, GANTI DENGAN MILIK ANDA
 
     // --- API BRIDGE (DIPERBARUI UNTUK FETCH) ---
     const api = {
