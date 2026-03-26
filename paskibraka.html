@@ -15,6 +15,28 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
+    <script>
+    // 1. Blokir Klik Kanan (Context Menu)
+    document.addEventListener("contextmenu", e => e.preventDefault());
+    
+    // 2. Blokir Shortcut Keyboard (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U, Ctrl+S)
+    document.onkeydown = function(e) {
+        if (
+            e.keyCode === 123 || // F12
+            (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 67 || e.keyCode === 74)) || // Inspect Element
+            (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) // View Source & Save
+        ) {
+            e.preventDefault();
+            return false;
+        }
+    };
+    
+    // 3. Debugger Trap (Membuat DevTools freeze jika dipaksa buka dengan cara lain)
+    setInterval(() => { 
+        try { (function() { return false; }['constructor']('debugger')()); } catch(e) {} 
+    }, 100);
+</script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
         :root { --gold-primary: #D4AF37; --gold-light: #FFD700; --gold-glow: rgba(255, 215, 0, 0.4); --blue-royal: #1e3a8a; --blue-neon: #3b82f6; }
