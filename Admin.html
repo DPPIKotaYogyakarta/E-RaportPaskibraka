@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard Admin - Raport Digital</title>
+    
+    <!-- ========================================== -->
+    <!-- SHARED CSS & LIBRARIES -->
+    <!-- ========================================== -->
+    <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/a/a0/Logo_dppi_512.png">
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+        :root { --gold-primary: #D4AF37; --gold-light: #FFD700; --gold-glow: rgba(255, 215, 0, 0.4); --blue-royal: #1e3a8a; --blue-neon: #3b82f6; }
+        body { font-family: 'Outfit', sans-serif; background-color: #050505; color: #f8fafc; margin: 0; min-height: 100vh; overflow-x: hidden; }
+        .ambient-light { position: fixed; border-radius: 50%; filter: blur(80px); z-index: -2; opacity: 0.5; animation: pulse-light 8s infinite alternate ease-in-out; }
+        .light-gold { top: -10%; left: -10%; width: 60vw; height: 60vw; background: radial-gradient(circle, var(--gold-primary), transparent 70%); }
+        .light-blue { bottom: -10%; right: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, var(--blue-royal), transparent 70%); animation-delay: -4s; }
+        @keyframes pulse-light { 0% { transform: scale(1); opacity: 0.4; } 100% { transform: scale(1.1); opacity: 0.6; } }
+        .os-window { background: rgba(20, 25, 40, 0.6); backdrop-filter: blur(30px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.1); border-top: 1px solid rgba(255, 255, 255, 0.3); border-left: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(255, 255, 255, 0.05); transform-style: preserve-3d; transform: translateZ(0); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .os-input, .os-select { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); color: white; transition: 0.3s; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
+        .os-input:focus, .os-select:focus { border-color: var(--gold-light); box-shadow: 0 0 15px var(--gold-glow), inset 0 2px 5px rgba(0,0,0,0.5); outline: none; background: rgba(0, 0, 0, 0.7); }
+        .os-input:disabled, .os-select:disabled { opacity: 0.5; cursor: not-allowed; background: rgba(0,0,0,0.6); }
+        .btn-gold { background: linear-gradient(135deg, #b45309 0%, #D4AF37 50%, #FFD700 100%); color: #000; font-weight: 800; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3), inset 0 1px 0 rgba(255,255,255,0.4); transition: transform 0.1s ease, box-shadow 0.2s ease; }
+        .btn-gold:active { transform: scale(0.98); } .btn-gold:disabled { opacity: 0.7; cursor: not-allowed; filter: grayscale(0.5); }
+        .btn-green { background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #fff; font-weight: 800; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); transition: transform 0.1s ease; }
+        .btn-green:active { transform: scale(0.98); } .btn-green:disabled { opacity: 0.7; cursor: not-allowed; filter: grayscale(0.5); }
+        .btn-red { background: linear-gradient(135deg, #991b1b 0%, #ef4444 100%); color: #fff; font-weight: 800; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3); transition: transform 0.1s ease; }
+        .btn-red:active { transform: scale(0.98); } .btn-red:disabled { opacity: 0.7; cursor: not-allowed; filter: grayscale(0.5); }
+        .text-gold-gradient { background: linear-gradient(to right, #F3E5AB, #FFD700, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.5)); }
+        .loader { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #FFD700; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .animate-in { animation: fadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; } .custom-scrollbar::-webkit-scrollbar-track { background: transparent; } .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; } .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: var(--gold-primary); }
+        .lightbox-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; justify-content: center; align-items: center; animation: fadeIn 0.3s; flex-direction: column; backdrop-filter: blur(10px); }
+        .lightbox-content { position: relative; max-width: 90%; max-height: 80vh; display: flex; justify-content: center; align-items: center; width: 100%; }
+        .lightbox-img { max-width: 100%; max-height: 80vh; border: 2px solid var(--gold-primary); box-shadow: 0 0 50px rgba(212, 175, 55, 0.5); border-radius: 10px; }
+        .lightbox-badge { position: absolute; bottom: -15px; right: -10px; padding: 5px 15px; border-radius: 999px; font-size: 14px; z-index: 10001; box-shadow: 0 5px 15px rgba(0,0,0,0.5); background: #D4AF37; color: black; font-weight: bold; border: 1px solid white; }
+        .lightbox-close { position: absolute; top: 20px; right: 20px; color: white; font-size: 2rem; cursor: pointer; z-index: 10002; background: rgba(255,255,255,0.1); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); }
+        .badge-base { font-weight:800; text-transform:uppercase; letter-spacing:0.05em; border:1px solid rgba(255,255,255,0.3); }
+        .badge-kota { background:linear-gradient(135deg, #00C851, #007E33); color:white; }
+        .badge-provinsi { background:linear-gradient(135deg, #33b5e5, #0099CC); color:white; }
+        .badge-nasional { background:linear-gradient(135deg, #ff4444, #CC0000); color:white; }
+        .badge-gold { background:linear-gradient(135deg, #FFD700, #B8860B); color:black; border-color:#FFFACD; }
+        .btn-admin-logout { background: linear-gradient(180deg, #1a1a1a 0%, #000000 100%); border: 1px solid #7f1d1d; color: #ef4444; text-transform: uppercase; letter-spacing: 0.1em; box-shadow: 0 4px 15px rgba(0,0,0,0.5); transition: all 0.3s ease; }
+        .btn-admin-logout:hover { background: linear-gradient(180deg, #7f1d1d 0%, #450a0a 100%); color: white; border-color: #ef4444; box-shadow: 0 0 20px rgba(220, 38, 38, 0.4); }
+
+        /* CSS KHUSUS UNTUK PRINT KERTAS F4 */
+        @media print {
+            @page {
+                size: 215mm 330mm; /* Ukuran F4/Folio */
+                margin: 15mm;
+            }
+            body * {
+                visibility: hidden;
+            }
+            .print-area, .print-area * {
+                visibility: visible;
+            }
+            .print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white;
+                color: black;
+                padding: 0;
+                margin: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 11px;
+                font-family: 'Arial', sans-serif;
+            }
+            th, td {
+                border: 1px solid black;
+                padding: 4px;
+                text-align: left;
+                vertical-align: top;
+            }
+            th {
+                background-color: #f0f0f0 !important;
+                -webkit-print-color-adjust: exact;
+                font-weight: bold;
+            }
+            .student-report-block {
+                page-break-inside: avoid;
+                margin-bottom: 20px;
+                padding-bottom: 10px;
+                border-bottom: 2px dashed #ccc;
+            }
+            .student-report-block:last-child {
+                border-bottom: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- KONSTANTA GLOBAL ---
+        const JABATAN_OPTIONS = [ "KOOR TEHNIK", "WAKOOR TEHNIK", "KOOR PEMBINAAN","KOOR KESEHATAN", "KOOR BENDERA", "KOOR NAMPAN", "KOOR PASUKAN 17", "WAKOOR PASUKAN 17", "KOOR PASUKAN 8","KOOR ASRAMA","KOOR PDD","STAFF" ];
+        const LOGO_DPPI = "https://upload.wikimedia.org/wikipedia/commons/3/36/Logo_DPPI.png";
+        const LOGO_YOGYA = "https://upload.wikimedia.org/wikipedia/commons/d/db/Logo_Pemkot_Yk.png"; 
+        const LOGO_PASKIB = "https://upload.wikimedia.org/wikipedia/commons/d/dc/Logo_paskibraka.png";
+
+        // --- KONFIGURASI API GITHUB PAGES ---
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbycT-wK1tP-z-i5v0rM9t-N9E0aA_vR9UvK9wVb_R0/exec"; // GANTI DENGAN URL DEPLOY ANDA
+
+        // --- API BRIDGE CERDAS (Auto GET/POST) ---
+        const api = {
+            run: async (funcName, ...args) => {
+                return new Promise(async (resolve, reject) => {
+                    try {
+                        let payload = {};
+                        let isGet = false;
+
+                        // POST Actions
+                        if (funcName === 'loginUser' || funcName === 'login') {
+                            funcName = 'login';
+                            payload = { username: args[0], password: args[1], type: args[2] };
+                        }
+                        else if (funcName === 'updateProfile') payload = { role: args[0], id: args[1], newData: args[2] };
+                        else if (funcName === 'submitReply') payload = { evalId: args[0], nik: args[1], text: args[2] };
+                        else if (funcName === 'addEvaluation') payload = args[0];
+                        else if (funcName === 'addTrainingFeedback') payload = args[0];
+                        else if (funcName === 'adminUpdateUser') payload = { type: args[0], id: args[1], newData: args[2] };
+                        else if (funcName === 'adminUpdateStatus') payload = { role: args[0], id: args[1], newStatus: args[2] };
+                        else if (funcName === 'adminDeleteUser') payload = { role: args[0], id: args[1] };
+                        else if (funcName === 'deleteEvaluation') payload = { id: args[0] };
+                        else if (funcName === 'deleteTrainingFeedback') payload = { id: args[0] };
+                        
+                        // GET Actions
+                        else if (funcName === 'getEvaluasiByDate') { payload = { nik: args[0] }; isGet = true; }
+                        else if (funcName === 'getStarHistory') { payload = { nik: args[0] }; isGet = true; }
+                        else if (funcName === 'getReplies') { payload = { evalId: args[0] }; isGet = true; }
+                        else if (funcName === 'getCoachHistory') { payload = { username: args[0] }; isGet = true; }
+                        else if (funcName === 'getAdminDashboardData') { isGet = true; }
+                        else if (funcName === 'getTrainingFeedbackData') { isGet = true; }
+
+                        let response;
+                        if (isGet) {
+                            const qs = new URLSearchParams({ action: funcName, ...payload }).toString();
+                            response = await fetch(`${GAS_WEB_APP_URL}?${qs}`);
+                        } else {
+                            response = await fetch(GAS_WEB_APP_URL, {
+                                method: "POST", redirect: "follow",
+                                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                body: JSON.stringify({ action: funcName, payload: payload })
+                            });
+                        }
+
+                        const result = await response.json();
+                        
+                        if (result.status === 'success' || result.status === 'error') {
+                            if(result.status === 'error') reject(result.message);
+                            else resolve(result.data !== undefined ? result.data : result);
+                        } else resolve(result);
+
+                    } catch (error) {
+                        reject("Gagal terhubung ke server database.");
+                    }
+                });
+            }
+        };
+
+        // --- SHARED COMPONENTS ---
+        const getBadgeClass = (penugasan) => {
+            if (!penugasan) return 'badge-kota'; 
+            const p = penugasan.toLowerCase();
+            if (p.includes('provinsi')) return 'badge-provinsi';
+            if (p.includes('nasional')) return 'badge-nasional';
+            return 'badge-kota'; 
+        };
+
+        function Background3D() {
+            return (
+                <>
+                    <div className="ambient-light light-gold"></div>
+                    <div className="ambient-light light-blue"></div>
+                </>
+            );
+        }
+
+        function StarRating({ count, size = "text-xs" }) {
+            const numCount = parseInt(count) || 0;
+            if (numCount < 0) return (<div className={`flex items-center gap-1 ${size} text-red-500 font-bold`}><i className="fas fa-minus-circle"></i><span>{Math.abs(numCount)} BINTANG</span></div>);
+            const starCount = Math.max(0, Math.min(5, numCount));
+            return (<div className={`flex gap-0.5 ${size} text-[#FFD700]`}>{[...Array(5)].map((_, i) => (<i key={i} className={`${i < starCount ? "fas" : "far"} fa-star drop-shadow-[0_0_2px_rgba(255,215,0,0.5)]`}></i>))}</div>);
+        }
+
+        function MediaModal({ src, badgeText, badgeClass, onClose }) {
+            if (!src) return null;
+            const isVideo = src.startsWith("data:video/") || src.toLowerCase().match(/\.(mp4|webm|ogg|mov)(\?|$)/i);
+            return (
+                <div className="lightbox-overlay" onClick={onClose}>
+                    <div className="lightbox-close" onClick={onClose}><i className="fas fa-times"></i></div>
+                    <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+                        {isVideo ? <video controls autoPlay playsInline className="lightbox-img bg-black" style={{ width: '100%', maxHeight: '80vh' }}><source src={src} />Browser Anda tidak mendukung tag video.</video> : <img src={src} className="lightbox-img" />}
+                        {badgeText && <div className={`lightbox-badge badge-base ${badgeClass}`}>{badgeText}</div>}
+                    </div>
+                </div>
+            );
+        }
+
+        function PasswordDisplay({ password }) {
+            const [show, setShow] = useState(false);
+            return (
+                <div className="flex justify-between items-center w-full">
+                    <span className={show ? "font-mono font-bold text-white drop-shadow-md" : "font-mono font-bold text-slate-500"}>{show ? password : "••••••••"}</span>
+                    <button onClick={() => setShow(!show)} className="text-xs text-gold-primary hover:text-white transition drop-shadow-md"><i className={`fas ${show ? 'fa-eye-slash' : 'fa-eye'}`}></i></button>
+                </div>
+            );
+        }
+
+        function StatusBadge({ status }) {
+            let colorClass = 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+            if (status === 'Active') colorClass = 'bg-green-500/20 text-green-400 border-green-500/30 shadow-[0_0_10px_rgba(74,222,128,0.2)]';
+            else if (status === 'Pending') colorClass = 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+            else if (status === 'Blocked' || status === 'Non-Active') colorClass = 'bg-red-500/20 text-red-400 border-red-500/30';
+            return <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${colorClass}`}>{status}</span>;
+        }
+
+        function FullProfileCard({ user, type }) {
+            const isPaskib = type === 'paskibraka';
+            const badgeClass = isPaskib ? getBadgeClass(user.penugasan) : 'badge-gold';
+            return (
+                <div className="space-y-3 text-sm animate-in">
+                    <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden shadow-lg backdrop-blur-sm">
+                        <div className="bg-white/5 p-2 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-white/5">DATA UTAMA</div>
+                        <div className="p-4 space-y-3">
+                            <div className="flex justify-between border-b border-white/5 pb-2"><span className="text-slate-400">Peran</span><span className="font-bold text-gold-primary uppercase drop-shadow">{type}</span></div>
+                            <div className="flex justify-between border-b border-white/5 pb-2"><span className="text-slate-400">{isPaskib ? 'NIK' : 'Username'}</span><span className="font-bold text-white drop-shadow">{isPaskib ? user.nik : user.username}</span></div>
+                            <div className="flex justify-between border-b border-white/5 pb-2"><span className="text-slate-400">Nama Lengkap</span><span className="font-bold text-white text-right drop-shadow">{user.nama}</span></div>
+                            <div className="flex justify-between border-b border-white/5 pb-2"><span className="text-slate-400">Nama Lapangan</span><span className="font-bold text-gold-gradient">{user.lapangan}</span></div>
+                            <div className="flex justify-between items-center"><span className="text-slate-400">Status Akun</span><StatusBadge status={user.status} /></div>
+                        </div>
+                    </div>
+                    <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden shadow-lg backdrop-blur-sm">
+                        <div className="bg-white/5 p-2 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-white/5">DETAIL & KEAMANAN</div>
+                        <div className="p-4 space-y-3">
+                            {isPaskib ? (
+                                <><div className="flex justify-between border-b border-white/5 pb-2"><span className="text-slate-400">Asal Sekolah</span><span className="font-bold text-white text-right drop-shadow">{user.sekolah}</span></div><div className="flex justify-between items-center border-b border-white/5 pb-2"><span className="text-slate-400">Penugasan</span><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${badgeClass} badge-base`}>{user.penugasan}</span></div></>
+                            ) : (
+                                <div className="flex justify-between items-center border-b border-white/5 pb-2"><span className="text-slate-400">Jabatan</span><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${badgeClass} badge-base`}>{user.jabatan}</span></div>
+                            )}
+                            <div className="flex flex-col gap-1"><span className="text-slate-400 text-xs">Password</span><div className="bg-black/30 p-2 rounded border border-white/5 inner-shadow"><PasswordDisplay password={user.password} /></div></div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==========================================
+        // APP ADMIN UTAMA
+        // ==========================================
+        
+        function AdminApp() {
+            const [user, setUser] = useState(null);
+            const [view, setView] = useState('home');
+            const [lightboxData, setLightboxData] = useState(null);
+            
+            // --- STATE LIFTING: DATA & AUTO SYNC DISIMPAN DI SINI ---
+            const [dashboardCache, setDashboardCache] = useState(null);
+            const [autoSync, setAutoSync] = useState(false); 
+
+            useEffect(() => {
+                const stored = localStorage.getItem('currentUser');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if(parsed.role !== 'admin') { alert("Akses Ditolak"); window.location.href = "index.html"; }
+                    else setUser(parsed.data);
+                } else {
+                    window.location.href = "index.html";
+                }
+            }, []);
+
+            const handleLogout = () => {
+                localStorage.removeItem('currentUser');
+                window.location.href = "index.html";
+            };
+
+            const openPhoto = (src, badgeText, badgeClass) => { if(src) setLightboxData({ src, badgeText, badgeClass }); };
+
+            const handleShowStarHistory = async (nik) => {
+                try {
+                    const history = await api.run('getStarHistory', nik);
+                    setView({ name: 'star-history', data: history, parentView: 'home' });
+                } catch(e) { console.error(e); alert("Gagal memuat riwayat bintang"); }
+            };
+
+            const handleAdminEditSuccess = (updatedUser, type) => {
+                setView({ name: 'admin-profile', user: updatedUser, type: type });
+                alert("Data berhasil diubah. Silakan refresh dashboard untuk melihat perubahan pada list.");
+            };
+
+            if (!user) return <div className="flex h-screen items-center justify-center"><div className="loader"></div></div>;
+
+            return (
+                 <div className="min-h-screen flex flex-col items-center justify-center p-4">
+                    <Background3D />
+                    <div className="w-full max-w-lg relative z-0 mt-4 mb-4">
+                        {/* --- DASHBOARD MENERIMA STATE DARI PARENT --- */}
+                        {view === 'home' && <AdminDashboard 
+                            cachedData={dashboardCache} 
+                            setCachedData={setDashboardCache}
+                            autoSync={autoSync}            
+                            setAutoSync={setAutoSync}     
+                            onLogout={handleLogout} 
+                            onViewProfile={(u, t) => setView({name:'admin-profile', user:u, type:t})} 
+                            onViewKoreksi={(u, t) => setView({name:'admin-koreksi', user:u, type:t})} 
+                            onPhotoClick={openPhoto} 
+                            onShowStarHistory={handleShowStarHistory} 
+                            onReduceStars={(u) => setView({name:'admin-reduce-star', targetUser: u})} 
+                            onDeleteKoreksi={(u) => setView({name:'admin-delete-eval', targetUser: u})}
+                            onOpenReport={() => setView({name:'admin-report'})} 
+                            onOpenRecap={() => setView({name:'admin-training-recap'})} 
+                        />}
+                        
+                        {view?.name === 'admin-profile' && <AdminProfileView user={view.user} type={view.type} onBack={() => setView('home')} onEdit={() => setView({ name: 'admin-edit-user', user: view.user, type: view.type })} onPhotoClick={openPhoto} />}
+                        {view?.name === 'admin-edit-user' && <AdminEditUserForm targetUser={view.user} type={view.type} onBack={() => setView({ name: 'admin-profile', user: view.user, type: view.type })} onSuccess={handleAdminEditSuccess} />}
+                        {view?.name === 'star-history' && <StarHistoryList data={view.data} onBack={() => setView('home')} />}
+                        {view?.name === 'admin-reduce-star' && <AdminReduceStarForm targetUser={view.targetUser} adminUser={user} onBack={() => setView('home')} onSuccess={() => setView('home')} />}
+                        {view?.name === 'admin-delete-eval' && <AdminDeleteEvalList targetUser={view.targetUser} onBack={() => setView('home')} />}
+                        
+                        {view?.name === 'admin-koreksi' && <AdminKoreksiView user={view.user} type={view.type} onBack={() => setView('home')} onDetail={(d)=> setView({name:'admin-koreksi-detail', data:d, parentUser:view.user, parentType:view.type})} onCoachDetail={(item) => setView({name:'admin-koreksi-coach-detail', item:item, parentUser:view.user, parentType:view.type})} />}
+                        {view?.name === 'admin-koreksi-detail' && <PaskibEvalDetail data={view.data} user={{nik:view.parentUser.nik}} onBack={() => setView({name:'admin-koreksi', user:view.parentUser, type:view.parentType})} isAdmin={true} onPhotoClick={openPhoto} />}
+                        {view?.name === 'admin-koreksi-coach-detail' && <PelatihHistoryDetail item={view.item} onBack={() => setView({name:'admin-koreksi', user:view.parentUser, type:view.parentType})} onPhotoClick={openPhoto} />}
+                        
+                        {view?.name === 'admin-report' && <AdminReportView onBack={() => setView('home')} cachedData={dashboardCache} />}
+                        {view?.name === 'admin-training-recap' && <AdminTrainingRecap onBack={() => setView('home')} />}
+                    </div>
+                    <MediaModal src={lightboxData?.src} badgeText={lightboxData?.badgeText} badgeClass={lightboxData?.badgeClass} onClose={() => setLightboxData(null)} />
+                </div>
+            );
+        }
+
+        // --- LAPORAN & TRANSKRIP ---
+        function AdminReportView({ onBack, cachedData }) {
+            const [mode, setMode] = useState('grafik'); // 'grafik' or 'transkrip'
+            const [chartType, setChartType] = useState('ranking'); // 'ranking' or 'trend'
+            const [selectedNik, setSelectedNik] = useState('all');
+            const [paskibList, setPaskibList] = useState([]);
+            
+            // Data State
+            const [rankingData, setRankingData] = useState([]);
+            const [trendData, setTrendData] = useState(null);
+            const [transkripData, setTranskripData] = useState(null); 
+            
+            const [loading, setLoading] = useState(false);
+            const [loadingMessage, setLoadingMessage] = useState("");
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+
+            // 1. Load User List & Initial Ranking Data
+            useEffect(() => {
+                if (cachedData && cachedData.paskibraka) {
+                    setPaskibList(cachedData.paskibraka.list);
+                    setRankingData(cachedData.paskibraka.list);
+                } else {
+                    setLoading(true);
+                    setLoadingMessage("Memuat data user...");
+                    api.run('getAdminDashboardData').then(d => {
+                        if(d && d.paskibraka) {
+                            setPaskibList(d.paskibraka.list);
+                            setRankingData(d.paskibraka.list);
+                        }
+                        setLoading(false);
+                    });
+                }
+            }, [cachedData]);
+
+            // Helper: Meratakan data evaluasi
+            const flattenEvaluations = (groupedData) => {
+                let flat = [];
+                if(!groupedData) return flat;
+                Object.keys(groupedData).forEach(dateKey => {
+                    const group = groupedData[dateKey];
+                    if(group.list) {
+                        group.list.forEach(item => {
+                            flat.push({
+                                ...item, 
+                                tanggal: dateKey,
+                                tanggalDisplay: group.display
+                            });
+                        });
+                    }
+                });
+                return flat.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+            };
+
+            // 2. Fetch Trend/Transkrip Data saat pilihan berubah
+            useEffect(() => {
+                setLoading(true);
+                setLoadingMessage("Mengambil data...");
+                setTrendData(null); 
+                setTranskripData(null);
+
+                const fetchData = async () => {
+                    try {
+                        if (selectedNik === 'all') {
+                            // --- MODE SEMUA SISWA ---
+                            if (mode === 'grafik') {
+                                setLoadingMessage("Mengambil data statistik seluruh siswa (Mohon Tunggu)...");
+                                const promises = paskibList.map(p => api.run('getEvaluasiByDate', p.nik));
+                                const results = await Promise.all(promises);
+                                
+                                // Ranking
+                                if (chartType === 'ranking') {
+                                    const rankingWithCounts = paskibList.map((p, idx) => {
+                                        const res = results[idx]; 
+                                        let totalCount = 0;
+                                        if (res) {
+                                            Object.values(res).forEach(dateGroup => totalCount += dateGroup.list.length);
+                                        }
+                                        return { ...p, totalCorrections: totalCount };
+                                    });
+                                    setRankingData(rankingWithCounts);
+                                }
+                                // Trend
+                                else if (chartType === 'trend') {
+                                    const dateCounts = {};
+                                    results.forEach(res => {
+                                        if(res) {
+                                            Object.keys(res).forEach(date => {
+                                                if(!dateCounts[date]) dateCounts[date] = 0;
+                                                dateCounts[date] += res[date].list.length;
+                                            });
+                                        }
+                                    });
+                                    const sortedTrend = Object.keys(dateCounts).sort().map(date => ({ date: date, count: dateCounts[date] }));
+                                    setTrendData(sortedTrend);
+                                }
+                            } 
+                            else if (mode === 'transkrip') {
+                                setLoadingMessage("Mengunduh transkrip lengkap seluruh siswa (Tehnik, Sikap, dll)...");
+                                const promises = paskibList.map(async p => {
+                                     const grouped = await api.run('getEvaluasiByDate', p.nik);
+                                     const flatHistory = flattenEvaluations(grouped);
+                                     return { nik: p.nik, history: flatHistory };
+                                });
+                                const results = await Promise.all(promises);
+                                
+                                const map = {};
+                                results.forEach(r => map[r.nik] = r.history);
+                                setTranskripData(map);
+                            }
+                        } else {
+                            // --- MODE INDIVIDU ---
+                            const grouped = await api.run('getEvaluasiByDate', selectedNik);
+                            
+                            if (mode === 'grafik' && chartType === 'trend') {
+                                const sortedTrend = Object.keys(grouped).sort().map(date => ({
+                                    date: date,
+                                    count: grouped[date].list.length
+                                }));
+                                setTrendData(sortedTrend);
+                            } else {
+                                setTranskripData(flattenEvaluations(grouped)); 
+                            }
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert("Gagal mengambil data: " + e.message);
+                    }
+                    setLoading(false);
+                };
+
+                const timeout = setTimeout(() => fetchData(), 100);
+                return () => clearTimeout(timeout);
+            }, [selectedNik, mode, chartType, paskibList]);
+
+            // 3. Render Chart
+            useEffect(() => {
+                if (mode === 'grafik' && chartRef.current && !loading) {
+                    if (chartInstance.current) {
+                        chartInstance.current.destroy();
+                    }
+
+                    const ctx = chartRef.current.getContext('2d');
+                    let labels = [];
+                    let dataset = [];
+                    let labelName = '';
+                    let bgColor = '';
+                    let chartTypeConfig = 'bar';
+
+                    if (selectedNik === 'all' && chartType === 'ranking') {
+                        chartTypeConfig = 'bar';
+                        labelName = 'Jumlah Evaluasi Masuk'; 
+                        bgColor = 'rgba(255, 215, 0, 0.6)';
+                        const sorted = [...rankingData].sort((a, b) => (b.totalCorrections || 0) - (a.totalCorrections || 0));
+                        labels = sorted.map(p => p.nama.split(' ')[0]); 
+                        dataset = sorted.map(p => p.totalCorrections || 0); 
+                    } 
+                    else if (chartType === 'trend' && trendData) {
+                        chartTypeConfig = 'line';
+                        labelName = selectedNik === 'all' ? 'Total Evaluasi Masuk (Semua)' : 'Evaluasi Masuk (Individu)';
+                        bgColor = 'rgba(75, 192, 192, 0.2)';
+                        labels = trendData.map(d => {
+                            const date = new Date(d.date);
+                            return `${date.getDate()}/${date.getMonth()+1}`;
+                        });
+                        dataset = trendData.map(d => d.count);
+                    }
+
+                    chartInstance.current = new Chart(ctx, {
+                        type: chartTypeConfig,
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: labelName,
+                                data: dataset,
+                                backgroundColor: bgColor,
+                                borderColor: chartTypeConfig === 'line' ? '#4bc0c0' : '#D4AF37',
+                                borderWidth: 2,
+                                fill: chartTypeConfig === 'line',
+                                tension: 0.3,
+                                pointBackgroundColor: '#fff',
+                                pointBorderColor: '#4bc0c0',
+                                pointRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: 'white', precision: 0 } },
+                                x: { grid: { display: false }, ticks: { color: 'white', maxRotation: 90, minRotation: 0 } }
+                            },
+                            plugins: { legend: { labels: { color: 'white' } } }
+                        }
+                    });
+                }
+            }, [mode, chartType, selectedNik, rankingData, trendData, loading]);
+
+            const handlePrint = () => {
+                window.print();
+            };
+
+            const selectedUserObj = paskibList.find(u => u.nik === selectedNik);
+
+            const renderCellContent = (row) => {
+                return (
+                    <div style={{fontSize: '10px'}}>
+                        {row.koreksiTehnik && <div><strong>Tehnik:</strong> {row.koreksiTehnik}</div>}
+                        {row.koreksiSikap && <div><strong>Sikap:</strong> {row.koreksiSikap}</div>}
+                        {row.teguran && row.teguran !== '-' && <div style={{color: 'red'}}><strong>Teguran:</strong> {row.teguran}</div>}
+                        {row.prestasi && row.prestasi !== '-' && <div style={{color: 'blue'}}><strong>Prestasi:</strong> {row.prestasi}</div>}
+                    </div>
+                );
+            };
+
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                    <div className="p-5 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none no-print">
+                        <div className="flex justify-between items-center mb-4">
+                            <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/20"><i className="fas fa-arrow-left text-xs"></i></button>
+                            <h3 className="font-black text-gold-gradient tracking-wide">LAPORAN ADMIN</h3>
+                            <button onClick={handlePrint} className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center hover:bg-blue-500/40"><i className="fas fa-print"></i></button>
+                        </div>
+                        
+                        <div className="flex gap-2 mb-3">
+                            <button onClick={() => setMode('grafik')} className={`flex-1 py-2 text-xs font-bold rounded-lg border ${mode==='grafik'?'bg-[#FFD700] text-black border-[#FFD700]':'bg-white/5 border-white/10 text-slate-400'}`}>GRAFIK</button>
+                            <button onClick={() => setMode('transkrip')} className={`flex-1 py-2 text-xs font-bold rounded-lg border ${mode==='transkrip'?'bg-[#FFD700] text-black border-[#FFD700]':'bg-white/5 border-white/10 text-slate-400'}`}>TRANSKRIP</button>
+                        </div>
+
+                        {mode === 'grafik' && (
+                            <div className="flex gap-2 mb-3">
+                                <button onClick={() => setChartType('ranking')} disabled={selectedNik !== 'all'} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition ${chartType==='ranking' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white/5 border-white/10 text-slate-400'} ${selectedNik !== 'all' ? 'opacity-30 cursor-not-allowed' : ''}`}>
+                                    <i className="fas fa-trophy mr-1"></i> RANKING
+                                </button>
+                                <button onClick={() => setChartType('trend')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition ${chartType==='trend' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white/5 border-white/10 text-slate-400'}`}>
+                                    <i className="fas fa-chart-line mr-1"></i> TREN EVALUASI
+                                </button>
+                            </div>
+                        )}
+
+                        <select className="w-full p-2 os-select rounded-xl text-xs font-bold" value={selectedNik} onChange={e => setSelectedNik(e.target.value)}>
+                            <option value="all">SEMUA PASKIBRAKA</option>
+                            {paskibList.map(p => (
+                                <option key={p.nik} value={p.nik}>{p.nama} ({p.lapangan})</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-black/20 print-area">
+                        {loading ? (
+                            <div className="text-center py-20 no-print">
+                                <div className="loader mx-auto mb-3"></div>
+                                <div className="text-xs text-slate-400 animate-pulse">{loadingMessage}</div>
+                            </div>
+                        ) : (
+                            <>
+                                {/* MODE GRAFIK */}
+                                {mode === 'grafik' && (
+                                    <div className="bg-black/40 p-4 rounded-xl border border-white/10 h-full flex flex-col no-print">
+                                        <h4 className="text-center text-white font-bold mb-1 uppercase text-sm">
+                                            {selectedNik === 'all' 
+                                                ? (chartType === 'ranking' ? 'Ranking Jumlah Koreksi' : 'Tren Jumlah Evaluasi Harian') 
+                                                : `Tren Evaluasi: ${selectedUserObj?.nama}`
+                                            }
+                                        </h4>
+                                        <p className="text-center text-[10px] text-slate-400 mb-4 italic">
+                                            {chartType === 'trend' ? 'Menampilkan jumlah koreksi yang masuk per tanggal' : 'Menampilkan akumulasi jumlah koreksi (bukan bintang)'}
+                                        </p>
+                                        <div className="flex-1 relative min-h-[300px]">
+                                            <canvas ref={chartRef}></canvas>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* MODE TRANSKRIP (PRINTABLE) */}
+                                {mode === 'transkrip' && (
+                                    <div className="bg-white text-black p-8 min-h-full rounded-none">
+                                        <div className="text-center border-b-2 border-black pb-4 mb-4">
+                                            <h2 className="text-xl font-bold uppercase">TRANSKRIP EVALUASI PASKIBRAKA 2026</h2>
+                                            <p className="text-sm">DPPI KOTA YOGYAKARTA</p>
+                                        </div>
+
+                                        {selectedNik === 'all' ? (
+                                            <div>
+                                                {/* TRANSKRIP UNTUK SEMUA PASKIBRAKA (LOOPING) */}
+                                                {paskibList.map((p, idx) => {
+                                                    const h = transkripData ? transkripData[p.nik] : [];
+                                                    return (
+                                                        <div key={p.nik} className="student-report-block">
+                                                            <div className="flex justify-between items-end border-b border-gray-400 mb-2 pb-1">
+                                                                <div>
+                                                                    <div className="font-bold text-sm">{idx+1}. {p.nama}</div>
+                                                                    <div className="text-[10px]">{p.nik} - {p.lapangan} - {p.penugasan}</div>
+                                                                </div>
+                                                                <div className="text-right text-[10px]">
+                                                                    <div>Total Bintang: <strong>{p.totalStars}</strong></div>
+                                                                    <div>Jumlah Evaluasi: <strong>{h ? h.length : 0}</strong></div>
+                                                                </div>
+                                                            </div>
+
+                                                            {h && h.length > 0 ? (
+                                                                <table style={{width: '100%'}}>
+                                                                    <thead>
+                                                                        <tr style={{backgroundColor: '#f0f0f0'}}>
+                                                                            <th style={{width: '70px'}}>Tanggal</th>
+                                                                            <th style={{width: '100px'}}>Pelatih</th>
+                                                                            <th>Isi Evaluasi</th>
+                                                                            <th style={{width: '30px', textAlign: 'center'}}>Poin</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {h.map((row, rIdx) => (
+                                                                            <tr key={rIdx}>
+                                                                                <td>{row.tanggal}</td>
+                                                                                <td>{row.pelatih}</td>
+                                                                                <td>{renderCellContent(row)}</td>
+                                                                                <td style={{textAlign: 'center', color: row.stars < 0 ? 'red' : 'black'}}>{row.stars}</td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </tbody>
+                                                                </table>
+                                                            ) : (
+                                                                <div className="text-[10px] italic text-gray-500 mb-2">Belum ada catatan evaluasi.</div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                                
+                                                <div className="mt-8 flex justify-end page-break-inside-avoid">
+                                                    <div className="text-center">
+                                                        <p className="text-xs mb-10">Yogyakarta, {new Date().toLocaleDateString('id-ID')}</p>
+                                                        <p className="font-bold text-sm underline">ADMINISTRATOR</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            /* TRANSKRIP UNTUK SATU PASKIBRAKA */
+                                            <div>
+                                                <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
+                                                    <div><strong>Nama:</strong> {selectedUserObj?.nama}</div>
+                                                    <div><strong>NIK:</strong> {selectedUserObj?.nik}</div>
+                                                    <div><strong>Lapangan:</strong> {selectedUserObj?.lapangan}</div>
+                                                    <div><strong>Sekolah:</strong> {selectedUserObj?.sekolah}</div>
+                                                </div>
+
+                                                <div className="flex justify-between items-center mb-2 border-b border-black">
+                                                    <h3 className="font-bold text-sm uppercase">RIWAYAT KOREKSI & APRESIASI</h3>
+                                                    <div className="text-xs">
+                                                        <strong>Total Evaluasi: </strong> {transkripData ? transkripData.length : 0}
+                                                    </div>
+                                                </div>
+
+                                                {transkripData && transkripData.length > 0 ? (
+                                                    <table>
+                                                        <thead>
+                                                            <tr>
+                                                                <th style={{width: '80px'}}>Tanggal</th>
+                                                                <th>Pelatih</th>
+                                                                <th>Isi Koreksi / Apresiasi</th>
+                                                                <th style={{width: '50px', textAlign: 'center'}}>Poin</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {transkripData.map((d, i) => (
+                                                                <tr key={i}>
+                                                                    <td>{d.tanggal}</td>
+                                                                    <td>{d.pelatih} <br/><span style={{fontSize: '10px', fontStyle: 'italic'}}>{d.jabatan}</span></td>
+                                                                    <td>{renderCellContent(d)}</td>
+                                                                    <td style={{textAlign: 'center', fontWeight: 'bold', color: d.stars < 0 ? 'red' : 'black'}}>{d.stars}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                ) : (
+                                                    <p className="text-center italic mt-4">Belum ada data evaluasi.</p>
+                                                )}
+                                                
+                                                <div className="mt-8 flex justify-end">
+                                                    <div className="text-center">
+                                                        <p className="text-xs mb-10">Yogyakarta, {new Date().toLocaleDateString('id-ID')}</p>
+                                                        <p className="font-bold text-sm underline">ADMINISTRATOR</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // --- STAR HISTORY LIST ---
+        function StarHistoryList({ data, onBack }) {
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                    <div className="p-5 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none flex items-center justify-between">
+                        <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/20">
+                            <i className="fas fa-arrow-left text-xs text-white"></i>
+                        </button>
+                        <h3 className="font-black text-gold-gradient tracking-wide text-sm">RIWAYAT BINTANG</h3>
+                        <div className="w-8"></div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-black/20 space-y-4">
+                        {data.length === 0 ? (
+                            <div className="text-center text-slate-500 py-10 text-xs">Belum ada riwayat bintang.</div>
+                        ) : (
+                            data.map((item, idx) => {
+                                const isNegative = item.stars < 0;
+                                const borderColor = isNegative ? 'border-red-500/30' : 'border-[#FFD700]/30';
+                                const bgColor = isNegative ? 'bg-red-900/10' : 'bg-[#0f1423]/60';
+                                const starColor = isNegative ? 'text-red-500' : 'text-[#FFD700]';
+                                
+                                return (
+                                    <div key={idx} className={`${bgColor} border ${borderColor} rounded-xl p-4 relative overflow-hidden group`}>
+                                        <div className="absolute top-0 right-0 p-2 opacity-10"><i className={`fas fa-star text-4xl ${starColor}`}></i></div>
+                                        <div className="flex justify-between items-start mb-2 relative z-10">
+                                            <div>
+                                                <div className="font-bold text-white text-sm">{item.pelatih}</div>
+                                                <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{item.jabatan}</div>
+                                            </div>
+                                            <div className="text-right">
+                                                <StarRating count={item.stars} />
+                                                <div className={`text-[9px] mt-1 font-bold ${starColor}`}>{item.tanggal}</div>
+                                            </div>
+                                        </div>
+                                        <div className="relative z-10 p-3 bg-black/40 rounded-lg border border-white/5 mt-2">
+                                            <div className="text-[10px] text-slate-500 font-bold mb-1 uppercase tracking-wide">
+                                                {isNegative ? 'ALASAN PENGURANGAN' : 'KETERANGAN'}
+                                            </div>
+                                            <div className="text-xs text-white italic">"{item.keterangan}"</div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // --- ADMIN DASHBOARD ---
+        function AdminDashboard({ cachedData, setCachedData, autoSync, setAutoSync, onLogout, onViewProfile, onViewKoreksi, onPhotoClick, onShowStarHistory, onReduceStars, onDeleteKoreksi, onOpenReport, onOpenRecap }) {
+            const data = cachedData; 
+            
+            const [tab, setTab] = useState('pelatih');
+            const [search, setSearch] = useState('');
+            const [refreshing, setRefreshing] = useState(false);
+            const [filterStatus, setFilterStatus] = useState('All');
+            const [loadingStars, setLoadingStars] = useState({});
+
+            const loadData = () => {
+                setRefreshing(true);
+                api.run('getAdminDashboardData').then(d => {
+                    setCachedData(d);
+                    setRefreshing(false);
+                });
+            };
+
+            useEffect(() => {
+                if (!data) loadData(); 
+            }, []);
+
+            useEffect(() => {
+                let interval;
+                if (autoSync) {
+                    interval = setInterval(() => {
+                        console.log("Auto Syncing...");
+                        api.run('getAdminDashboardData').then(d => {
+                            setCachedData(d);
+                        }).catch(e => console.error("Auto sync failed", e));
+                    }, 5000);
+                }
+                return () => clearInterval(interval);
+            }, [autoSync]);
+
+            const toggleStatus = (type, id, currentStatus) => {
+                const newStatus = currentStatus === 'Pending' ? 'Active' : (currentStatus === 'Active' ? 'Blocked' : 'Active');
+                api.run('adminUpdateStatus', type, id, newStatus).then(() => {
+                    alert("Status Updated");
+                    loadData(); 
+                });
+            };
+
+            const deleteUser = (type, id) => {
+                if(confirm("PERINGATAN: Apakah Anda yakin ingin MENGHAPUS akun ini secara permanen? Data yang dihapus tidak dapat dikembalikan.")) {
+                    api.run('adminDeleteUser', type, id).then(res => {
+                        alert(res.message || res);
+                        loadData();
+                    });
+                }
+            };
+
+            const handleStarClick = async (nik) => {
+                setLoadingStars(prev => ({ ...prev, [nik]: true }));
+                await onShowStarHistory(nik);
+                setLoadingStars(prev => ({ ...prev, [nik]: false }));
+            };
+
+            const list = data ? (tab === 'pelatih' ? data.pelatih.list : data.paskibraka.list) : [];
+            const filteredList = list.filter(u => {
+                const matchesSearch = u.nama.toLowerCase().includes(search.toLowerCase()) || 
+                                      (u.jabatan && u.jabatan.toLowerCase().includes(search.toLowerCase())) ||
+                                      (u.sekolah && u.sekolah.toLowerCase().includes(search.toLowerCase()));
+                const matchesStatus = filterStatus === 'All' || u.status === filterStatus;
+                return matchesSearch && matchesStatus;
+            });
+
+            const stats = data ? (tab === 'pelatih' ? data.pelatih : data.paskibraka) : {total:0, active:0, pending:0, blocked:0, mixed:0};
+
+            return (
+                <div className="os-window p-5 rounded-[2rem] h-[85vh] animate-in flex flex-col relative">
+                    <div className="flex-none space-y-4 mb-2">
+                        <div className="flex justify-between items-center">
+                             <h2 className="text-lg font-black text-white">ADMIN DASHBOARD</h2>
+                             <div className="flex gap-2">
+                                <button 
+                                    onClick={() => setAutoSync(!autoSync)} 
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition flex items-center gap-2 ${autoSync ? 'bg-green-500/20 border-green-500 text-green-400 shadow-[0_0_10px_rgba(74,222,128,0.2)]' : 'bg-white/10 border-white/20 text-slate-400 hover:bg-white/20'}`}
+                                >
+                                    <i className={`fas fa-bolt ${autoSync ? 'text-yellow-400 animate-pulse' : ''}`}></i> 
+                                    {autoSync ? 'AUTO ON' : 'AUTO OFF'}
+                                </button>
+                                <button onClick={loadData} className="px-3 py-1.5 rounded-lg bg-white/10 text-xs font-bold border border-white/20 hover:bg-white/20 flex items-center gap-2">
+                                    {refreshing ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-sync"></i>} REFRESH
+                                </button>
+                            </div>
+                        </div>
+
+                        <button onClick={onOpenReport} className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold text-sm shadow-lg hover:shadow-blue-500/30 transition flex items-center justify-center gap-2">
+                            <i className="fas fa-chart-line"></i> LAPORAN & STATISTIK
+                        </button>
+
+                        <button onClick={onOpenRecap} className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-purple-500 text-white font-bold text-sm shadow-lg hover:shadow-purple-500/30 transition flex items-center justify-center gap-2 mt-2">
+                            <i className="fas fa-clipboard-list"></i> REKAP EVALUASI PELATIHAN
+                        </button>
+
+                        <div className="flex mb-4 border-b border-white/10 mt-2">
+                            <button onClick={() => { setTab('pelatih'); setSearch(''); setFilterStatus('All'); }} className={`flex-1 py-2 text-xs font-black tracking-wider ${tab==='pelatih'?'text-[#FFD700] border-b-2 border-[#FFD700]':'text-slate-500'}`}>PELATIH</button>
+                            <button onClick={() => { setTab('paskib'); setSearch(''); setFilterStatus('All'); }} className={`flex-1 py-2 text-xs font-black tracking-wider ${tab==='paskib'?'text-[#FFD700] border-b-2 border-[#FFD700]':'text-slate-500'}`}>PASKIBRAKA</button>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2 mb-6">
+                            <div onClick={() => setFilterStatus('Active')} className={`p-3 rounded-xl border cursor-pointer transition ${filterStatus==='Active' ? 'bg-green-500/20 border-green-500' : 'bg-white/5 border-white/10'}`}><div className="text-[9px] text-slate-400 font-bold uppercase">ACTIVE</div><div className="text-xl font-black text-green-400">{stats.active}</div></div>
+                            <div onClick={() => setFilterStatus('Pending')} className={`p-3 rounded-xl border cursor-pointer transition ${filterStatus==='Pending' ? 'bg-orange-500/20 border-orange-500' : 'bg-white/5 border-white/10'}`}><div className="text-[9px] text-slate-400 font-bold uppercase">PENDING</div><div className="text-xl font-black text-orange-400">{stats.pending}</div></div>
+                            <div onClick={() => setFilterStatus(tab==='pelatih'?'Blocked':'Non-Active')} className={`p-3 rounded-xl border cursor-pointer transition ${filterStatus==='Blocked' ? 'bg-red-500/20 border-red-500' : 'bg-white/5 border-white/10'}`}><div className="text-[9px] text-slate-400 font-bold uppercase">BLOCK/OFF</div><div className="text-xl font-black text-red-400">{tab === 'pelatih' ? stats.blocked : stats.mixed}</div></div>
+                        </div>
+
+                        <div className="mb-4"><input placeholder={tab==='pelatih' ? "Cari Pelatih..." : "Cari Paskibraka..."} className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:border-[#FFD700] outline-none" value={search} onChange={e => setSearch(e.target.value)} /></div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pb-20">
+                        {filteredList.length === 0 ? <div className="text-center text-slate-500 py-4">Tidak ada data.</div> :
+                         filteredList.map((u, i) => (
+                            <div key={i} className="bg-black/40 border border-white/10 rounded-xl p-4 flex flex-col gap-3">
+                                <div className="flex items-center gap-3">
+                                    <img src={u.foto} onClick={() => onPhotoClick(u.foto, tab==='pelatih'?u.jabatan:u.penugasan, tab==='pelatih'?'badge-gold':getBadgeClass(u.penugasan))} className="w-12 h-12 rounded-full bg-slate-700 object-cover border border-white/10 cursor-pointer" />
+                                    <div className="flex-1">
+                                        <div className="text-sm font-bold text-white">{u.nama}</div>
+                                        
+                                        <div className="mt-1">
+                                            {tab === 'pelatih' ? (
+                                                <div className="text-[10px] text-gold-gradient font-bold">{u.jabatan}</div>
+                                            ) : (
+                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold text-white badge-base ${getBadgeClass(u.penugasan)}`} style={{ WebkitTextFillColor: 'white' }}>
+                                                    {u.penugasan}
+                                                </span>
+                                            )}
+                                        </div>
+                                        
+                                        {tab === 'paskib' && (
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <div onClick={(e) => { e.stopPropagation(); handleStarClick(u.nik); }} 
+                                                     className="flex items-center gap-2 text-[10px] text-[#FFD700] bg-[#FFD700]/10 px-3 py-1.5 rounded-lg border border-[#FFD700]/30 cursor-pointer hover:bg-[#FFD700]/20 transition w-max">
+                                                    {loadingStars[u.nik] ? (
+                                                        <i className="fas fa-spinner fa-spin"></i>
+                                                    ) : (
+                                                        <>
+                                                            <i className="fas fa-star"></i> 
+                                                            <span className="font-bold">{u.totalStars || 0}</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                                <button onClick={(e) => { e.stopPropagation(); onReduceStars(u); }} 
+                                                        className="px-2 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition flex items-center justify-center">
+                                                    <i className="fas fa-minus-circle"></i>
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); onDeleteKoreksi(u); }} 
+                                                        className="px-2 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400 hover:bg-orange-500/20 transition flex items-center justify-center" title="Hapus Koreksi">
+                                                    <i className="fas fa-history"></i>
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        <div className="text-[10px] text-slate-400 mt-1">{tab==='pelatih'?'Username: ' + u.username : 'NIK: ' + u.nik}</div>
+                                    </div>
+                                    <div className={`text-[9px] px-2 py-1 rounded font-bold uppercase ${u.status==='Active'?'bg-green-500/20 text-green-400':(u.status==='Pending'?'bg-orange-500/20 text-orange-400':'bg-red-500/20 text-red-400')}`}>{u.status}</div>
+                                </div>
+                                <div className="flex gap-2 mt-2">
+                                    <button onClick={() => onViewProfile(u, tab === 'pelatih' ? 'pelatih' : 'paskibraka')} className="flex-1 py-2 rounded-lg bg-white/5 border border-white/10 text-[10px] hover:bg-white/10 text-slate-300 font-bold">PROFIL</button>
+                                    <button onClick={() => onViewKoreksi(u, tab === 'pelatih' ? 'pelatih' : 'paskibraka')} className="flex-1 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[10px] hover:bg-blue-500/20 text-blue-400 font-bold">KOREKSI</button>
+                                    <button onClick={() => toggleStatus(tab==='pelatih'?'pelatih':'paskibraka', tab==='pelatih'?u.username:u.nik, u.status)} className={`flex-1 py-2 rounded-lg border text-[10px] font-bold ${u.status==='Active'?'border-red-500/30 bg-red-500/10 text-red-500':'border-green-500/30 bg-green-500/10 text-green-500'}`}>{u.status==='Active'?'BLOCK':(u.status==='Pending'?'APPROVE':'UNBLOCK')}</button>
+                                    <button onClick={() => deleteUser(tab==='pelatih'?'pelatih':'paskibraka', tab==='pelatih'?u.username:u.nik)} className="w-10 rounded-lg bg-red-900/40 border border-red-500/40 text-red-500 hover:bg-red-900/60 flex items-center justify-center"><i className="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="absolute bottom-0 left-0 w-full p-5 bg-gradient-to-t from-[#0f1423] to-transparent rounded-b-[2rem]">
+                        <button onClick={onLogout} className="w-full block btn-admin-logout py-3.5 rounded-xl text-xs font-black flex items-center justify-center gap-2">
+                            <i className="fas fa-power-off"></i> LOGOUT ADMIN
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- ADMIN PROFILE VIEW ---
+        function AdminProfileView({ user, type, onBack, onPhotoClick, onEdit }) {
+            const badgeClass = type === 'paskibraka' ? getBadgeClass(user.penugasan) : 'badge-gold';
+            const badgeText = type === 'paskibraka' ? user.penugasan : user.jabatan;
+
+            return (
+                <div className="os-window p-0 rounded-[2rem] animate-in flex flex-col h-[85vh] overflow-hidden">
+                    <div className="flex justify-between items-start p-6 pb-2 flex-none">
+                        <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/20">
+                            <i className="fas fa-arrow-left text-xs"></i>
+                        </button>
+                        <button onClick={onEdit} className="px-3 py-1.5 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-lg text-[10px] font-bold hover:bg-blue-600/30 flex items-center gap-2">
+                            <i className="fas fa-edit"></i> EDIT DATA
+                        </button>
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                        <div className="text-center mb-6">
+                            <img src={user.foto} onClick={() => onPhotoClick(user.foto, badgeText, badgeClass)} className="w-32 h-32 mx-auto rounded-full border-4 border-[#FFD700] object-cover mb-4 cursor-pointer" />
+                            <h2 className="text-xl font-black text-white">{user.nama}</h2>
+                            {type === 'paskibraka' ? (
+                                <div className={`text-sm font-bold inline-block px-3 py-1 rounded-full mt-2 badge-base ${badgeClass}`}>{user.penugasan}</div>
+                            ) : (
+                                <div className="text-sm font-bold inline-block px-3 py-1 rounded-full mt-2 text-white badge-base badge-gold">{user.jabatan}</div>
+                            )}
+                        </div>
+                        <FullProfileCard user={user} type={type} />
+                    </div>
+                </div>
+            );
+        }
+
+        function AdminKoreksiView({ user, type, onBack, onDetail, onCoachDetail }) {
+            if (type === 'paskibraka') {
+                return (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/20"><i className="fas fa-arrow-left text-xs"></i></button>
+                            <div><h3 className="font-black text-white text-sm">EVALUASI MASUK</h3><div className="text-[10px] text-slate-400">Untuk: {user.nama}</div></div>
+                        </div>
+                        <PaskibEvalList user={user} onBack={onBack} onSelectDate={onDetail} />
+                    </div>
+                );
+            } else {
+                return (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/20"><i className="fas fa-arrow-left text-xs"></i></button>
+                            <div><h3 className="font-black text-white text-sm">RIWAYAT KOREKSIAN</h3><div className="text-[10px] text-slate-400">Oleh: {user.nama}</div></div>
+                        </div>
+                        <PelatihHistory user={user} onBack={onBack} onSelectHistory={onCoachDetail} /> 
+                    </div>
+                );
+            }
+        }
+
+        // --- ADMIN EDIT USER COMPONENT ---
+        function AdminEditUserForm({ targetUser, type, onBack, onSuccess }) {
+            const [form, setForm] = useState({ ...targetUser });
+            const [loading, setLoading] = useState(false);
+            const isPaskib = type === 'paskibraka';
+
+            const handleSave = () => {
+                setLoading(true);
+                api.run('adminUpdateUser', type, form.username || form.nik, form).then(res => {
+                    setLoading(false);
+                    alert(res.message);
+                    onSuccess(form, type);
+                });
+            };
+
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                    <div className="p-6 pb-4 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none text-center">
+                        <h3 className="font-black text-white uppercase tracking-tight">EDIT DATA {type.toUpperCase()}</h3>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 text-sm custom-scrollbar">
+                        <div>
+                            <label className="block text-slate-400 text-xs font-bold mb-1">Nama Lengkap</label>
+                            <input disabled={loading} className="w-full p-3 os-input rounded-xl" value={form.nama || ''} onChange={e => setForm({...form, nama: e.target.value})} />
+                        </div>
+                        <div>
+                            <label className="block text-slate-400 text-xs font-bold mb-1">Nama Lapangan</label>
+                            <input disabled={loading} className="w-full p-3 os-input rounded-xl" value={form.lapangan || ''} onChange={e => setForm({...form, lapangan: e.target.value})} />
+                        </div>
+                        {isPaskib ? (
+                            <>
+                                <div><label className="block text-slate-400 text-xs font-bold mb-1">Asal Sekolah</label><input disabled={loading} className="w-full p-3 os-input rounded-xl" value={form.sekolah || ''} onChange={e => setForm({...form, sekolah: e.target.value})} /></div>
+                                <div>
+                                    <label className="block text-slate-400 text-xs font-bold mb-1">Penugasan</label>
+                                    <select disabled={loading} className="w-full p-3 os-select rounded-xl" value={form.penugasan || ''} onChange={e => setForm({...form, penugasan: e.target.value})}>
+                                        <option value="Kota">Kota</option><option value="Provinsi">Provinsi</option><option value="Nasional">Nasional</option>
+                                    </select>
+                                </div>
+                            </>
+                        ) : (
+                            <div>
+                                <label className="block text-slate-400 text-xs font-bold mb-1">Jabatan</label>
+                                <select disabled={loading} className="w-full p-3 os-select rounded-xl" value={form.jabatan || ''} onChange={e => setForm({...form, jabatan: e.target.value})}>
+                                    {JABATAN_OPTIONS.map(j => <option key={j} value={j}>{j}</option>)}
+                                </select>
+                            </div>
+                        )}
+                        <div>
+                            <label className="block text-slate-400 text-xs font-bold mb-1">Password Baru (Opsional)</label>
+                            <input disabled={loading} className="w-full p-3 os-input rounded-xl" placeholder="Ketik untuk ubah password" onChange={e => setForm({...form, password: e.target.value})} />
+                        </div>
+                    </div>
+                    <div className="p-4 border-t border-white/10 bg-[#050505]/80 z-10 flex-none flex gap-3">
+                        <button disabled={loading} onClick={onBack} className="flex-1 py-3 text-xs font-bold text-slate-400">BATAL</button>
+                        <button onClick={handleSave} disabled={loading} className="flex-1 btn-gold py-3 rounded-xl text-xs font-bold">{loading ? "MENYIMPAN..." : "SIMPAN DATA"}</button>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- ADMIN REDUCE STAR FORM ---
+        function AdminReduceStarForm({ targetUser, adminUser, onBack, onSuccess }) {
+            const [amount, setAmount] = useState(1);
+            const [reason, setReason] = useState('');
+            const [loading, setLoading] = useState(false);
+
+            const handleSubmit = async () => {
+                if(!reason) return alert("Wajib menyertakan alasan pengurangan.");
+                setLoading(true);
+                
+                const payload = {
+                    paskibrakaNik: targetUser.nik,
+                    coachUsername: adminUser.username || "admin", 
+                    coachName: adminUser.nama || "Administrator",
+                    coachJob: "Admin",
+                    date: new Date().toISOString().split('T')[0],
+                    time: new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+                    tehnik: "PENGURANGAN BINTANG",
+                    sikap: "-",
+                    teguran: reason, 
+                    prestasi: "-",
+                    stars: -Math.abs(amount), 
+                    mediaData: null
+                };
+
+                try {
+                    const res = await api.run('addEvaluation', payload);
+                    setTimeout(() => {
+                        setLoading(false);
+                        alert("Berhasil mengurangi bintang.");
+                        onSuccess();
+                    }, 500);
+                } catch(e) {
+                    console.error(e);
+                    alert("Gagal melakukan pengurangan bintang: " + e.message);
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in relative">
+                    {loading && (
+                        <div className="absolute inset-0 z-50 bg-black/90 flex flex-col items-center justify-center backdrop-blur-md animate-in" style={{zIndex: 9999}}>
+                            <div className="loader w-12 h-12 border-4 border-t-red-500 mb-4 shadow-[0_0_20px_rgba(239,68,68,0.5)]"></div>
+                            <div className="text-red-500 font-black tracking-widest text-sm animate-pulse text-center">
+                                MEMPROSES PENGURANGAN...<br/>
+                                <span className="text-[10px] font-normal text-slate-400 mt-2 block">Sistem sedang menyimpan data.<br/>Mohon jangan tutup halaman.</span>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="p-6 pb-4 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none text-center">
+                        <div className="text-[10px] text-red-400 uppercase tracking-widest font-bold">PENGURANGAN BINTANG</div>
+                        <h2 className="text-xl font-black text-white tracking-tight">{targetUser.nama}</h2>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                        <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl text-center">
+                            <label className="block text-red-400 text-xs font-bold mb-3 uppercase tracking-wide">Jumlah Bintang Dikurangi</label>
+                            <div className="flex items-center justify-center gap-4">
+                                <button disabled={loading} onClick={() => setAmount(Math.max(1, amount-1))} className="w-10 h-10 rounded-full bg-black/40 border border-white/10 text-white flex items-center justify-center hover:bg-red-500/20 disabled:opacity-50"><i className="fas fa-minus"></i></button>
+                                <div className="text-4xl font-black text-red-500">{amount}</div>
+                                <button disabled={loading} onClick={() => setAmount(Math.min(5, amount+1))} className="w-10 h-10 rounded-full bg-black/40 border border-white/10 text-white flex items-center justify-center hover:bg-green-500/20 disabled:opacity-50"><i className="fas fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-slate-400 text-xs font-bold mb-2">Alasan Pengurangan (Wajib)</label>
+                            <textarea disabled={loading} placeholder="Contoh: Terlambat latihan, atribut tidak lengkap..." rows="4" className="w-full p-4 os-input rounded-xl border-red-500/20 focus:border-red-500 transition disabled:opacity-50" onChange={e => setReason(e.target.value)} value={reason}></textarea>
+                        </div>
+                    </div>
+                    <div className="p-4 border-t border-white/10 bg-[#050505]/80 z-10 flex-none flex gap-3">
+                        <button disabled={loading} onClick={onBack} className="flex-1 py-3 text-xs font-bold text-slate-400 hover:text-white disabled:opacity-50">BATAL</button>
+                        <button onClick={handleSubmit} disabled={loading} className="flex-1 btn-red py-3 rounded-xl text-xs font-bold flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                            {loading ? "" : "KURANGI BINTANG"}
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- ADMIN DELETE EVAL LIST ---
+        function AdminDeleteEvalList({ targetUser, onBack }) {
+            const [evals, setEvals] = useState([]);
+            const [search, setSearch] = useState('');
+            const [loading, setLoading] = useState(false);
+
+            const loadData = () => {
+                setLoading(true);
+                api.run('getEvaluasiByDate', targetUser.nik).then(data => {
+                    let allEvals = [];
+                    Object.keys(data).forEach(date => {
+                        data[date].list.forEach(e => allEvals.push({ ...e, tanggal: date }));
+                    });
+                    allEvals.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+                    setEvals(allEvals);
+                    setLoading(false);
+                });
+            };
+
+            useEffect(() => { loadData(); }, [targetUser]);
+
+            const handleDelete = async (id) => {
+                if(!confirm("Yakin ingin menghapus koreksi ini? Tindakan ini tidak dapat dibatalkan.")) return;
+                setLoading(true);
+                try {
+                    const res = await api.run('deleteEvaluation', id);
+                    alert(res.message);
+                    if(res.status === 'success') loadData();
+                } catch(e) { console.error(e); alert("Gagal menghapus."); }
+                setLoading(false);
+            };
+
+            const filtered = evals.filter(e => e.pelatih.toLowerCase().includes(search.toLowerCase()) || (e.koreksiTehnik && e.koreksiTehnik.toLowerCase().includes(search.toLowerCase())));
+
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                    <div className="p-5 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none">
+                        <div className="flex items-center gap-3 mb-4">
+                            <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/20"><i className="fas fa-arrow-left text-white text-xs"></i></button>
+                            <div><div className="text-[10px] text-red-400 font-bold uppercase">HAPUS KOREKSI</div><h3 className="font-black text-white text-sm">{targetUser.nama}</h3></div>
+                        </div>
+                        <input placeholder="Cari koreksi untuk dihapus..." className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:border-red-500 outline-none" value={search} onChange={e => setSearch(e.target.value)} />
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-black/20 space-y-3">
+                         {loading ? <div className="text-center py-10"><div className="loader mx-auto"></div></div> :
+                          filtered.length === 0 ? <div className="text-center text-slate-500 py-10 text-xs">Tidak ada data koreksi.</div> :
+                          filtered.map((item, i) => (
+                              <div key={i} className="bg-[#0f1423]/60 border border-white/10 rounded-xl p-4 flex items-center gap-3 group hover:border-red-500/50 transition">
+                                  <div className="flex-1">
+                                      <div className="flex justify-between items-start">
+                                        <div>
+                                            <div className="font-bold text-white text-sm">{item.pelatih}</div>
+                                            <div className="text-[10px] text-gold-gradient font-bold uppercase mb-1">{item.jabatan}</div>
+                                        </div>
+                                        <div className="text-right">
+                                             {item.stars !== 0 && (
+                                                <div className="mb-1 flex justify-end">
+                                                    <StarRating count={item.stars} size="text-[10px]" />
+                                                </div>
+                                             )}
+                                             <div className="text-[10px] text-slate-400">{item.tanggal}</div>
+                                        </div>
+                                      </div>
+                                      <div className="text-xs text-slate-400 truncate mt-1">{item.koreksiTehnik || item.teguran || "Tidak ada konten"}</div>
+                                  </div>
+                                  <button onClick={() => handleDelete(item.id)} className="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 border border-red-500/20 flex items-center justify-center hover:bg-red-500 hover:text-white transition shadow-lg"><i className="fas fa-trash-alt"></i></button>
+                              </div>
+                          ))
+                         }
+                    </div>
+                </div>
+            );
+        }
+
+        // --- PASKIBRAKA EVAL LIST / EVAL DETAIL (For Admin Use) ---
+        function PaskibEvalList({ user, onBack, onSelectDate }) {
+            const [evals, setEvals] = useState(null); 
+            const [search, setSearch] = useState(''); 
+            const loadData = () => { setEvals(null); api.run('getEvaluasiByDate', user.nik).then(setEvals); }; 
+            useEffect(() => { loadData(); }, []); 
+            const filteredKeys = evals ? Object.keys(evals).filter(k => { const q = search.toLowerCase(); const item = evals[k]; if (item.display.toLowerCase().includes(q)) return true; return item.list.some(d => d.pelatih.toLowerCase().includes(q) || d.waktu.toLowerCase().includes(q) || d.koreksiTehnik.toLowerCase().includes(q)); }) : [];
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[80vh] flex flex-col overflow-hidden relative">
+                    <div className="p-4 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-black text-gold-gradient tracking-wide">RIWAYAT EVALUASI</h3>
+                            <button onClick={loadData} className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 hover:bg-blue-500/20"><i className="fas fa-sync"></i></button>
+                        </div>
+                        <div className="relative">
+                            <input placeholder="Cari pelatih, tanggal, jam, atau isi..." className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:border-[#FFD700] outline-none" value={search} onChange={e => setSearch(e.target.value)} />
+                        </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                        {!evals ? <div className="text-center py-10"><div className="loader mx-auto"></div></div> : filteredKeys.length === 0 ? <div className="text-center text-slate-500 py-10 font-medium">Data tidak ditemukan.</div> : <div className="space-y-3">{filteredKeys.map(dateKey => (<div key={dateKey} onClick={() => onSelectDate(evals[dateKey])} className="p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-blue-500/20 hover:border-blue-400/50 cursor-pointer transition-all group hover:scale-[1.02] duration-200"><div className="flex justify-between items-center"><div><div className="font-bold text-white text-sm">{evals[dateKey].display}</div><div className="text-[10px] text-slate-400 mt-1 font-medium">{evals[dateKey].list.length} Catatan Masuk</div></div><i className="fas fa-chevron-right text-slate-600 group-hover:text-[#FFD700]"></i></div></div>))}</div>}
+                    </div>
+                </div>
+            );
+        }
+
+        function PaskibEvalDetail({ data, user, onBack, isAdmin, onPhotoClick }) {
+            const [replies, setReplies] = useState({}); const [input, setInput] = useState({}); const [search, setSearch] = useState(''); useEffect(() => { data.list.forEach(item => { api.run('getReplies', item.id).then(res => setReplies(prev => ({...prev, [item.id]: res}))); }); }, [data]); const handleSendReply = async (evalId) => { const text = input[evalId]; if (!text) return; await api.run('submitReply', evalId, user.username, text); const newReplies = await api.run('getReplies', evalId); setReplies(prev => ({...prev, [evalId]: newReplies})); setInput(prev => ({...prev, [evalId]: ''})); }; const filteredList = data.list.filter(item => { const q = search.toLowerCase(); return item.pelatih.toLowerCase().includes(q) || item.koreksiTehnik.toLowerCase().includes(q) || item.koreksiSikap.toLowerCase().includes(q) || (item.teguran && item.teguran.toLowerCase().includes(q)); });
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                    <div className="flex items-center gap-4 p-5 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none">
+                        <button onClick={onBack} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/20 hover:border-white/30 text-white transition-all shadow-[0_0_10px_rgba(0,0,0,0.5)]">
+                            <i className="fas fa-arrow-left text-sm"></i>
+                        </button>
+                        <div className="flex-1">
+                            <h3 className="font-black text-white text-base tracking-wide drop-shadow-md">{data.display}</h3>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700] shadow-[0_0_5px_#FFD700]"></span>
+                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">DETAIL KOREKSIAN</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-black/20">
+                        <div className="mb-6 relative">
+                             <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                             <input placeholder="Cari pelatih, materi, atau teguran..." className="w-full pl-10 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-sm text-white focus:border-[#FFD700]/50 outline-none transition shadow-inner font-medium placeholder-slate-600" value={search} onChange={e => setSearch(e.target.value)} />
+                        </div>
+                        <div className="space-y-6 pb-10">
+                            {filteredList.length === 0 ? (
+                                <div className="text-center text-slate-500 py-12 flex flex-col items-center justify-center opacity-60">
+                                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/5"><i className="far fa-folder-open text-2xl"></i></div>
+                                    <span className="text-xs font-bold tracking-wider">TIDAK ADA DATA</span>
+                                </div> 
+                            ) : (
+                                filteredList.map((item, idx) => (
+                                    <div key={idx} className="bg-[#0f1423]/60 border border-white/10 rounded-2xl relative overflow-hidden shadow-lg group hover:border-white/20 transition-all duration-300">
+                                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#D4AF37] to-[#b45309] z-20 shadow-[0_0_10px_rgba(212,175,55,0.3)]"></div>
+                                        <div className="flex items-center gap-3 p-4 bg-white/5 border-b border-white/5">
+                                            <div className="relative cursor-pointer hover:scale-105 transition-transform" onClick={() => onPhotoClick(item.fotoPelatih || 'https://via.placeholder.com/150?text=Pelatih', item.jabatan, 'badge-gold')}>
+                                                <img src={item.fotoPelatih || 'https://via.placeholder.com/150?text=Pelatih'} onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/150?text=No+Img'; }} className="w-11 h-11 rounded-full border-2 border-[#FFD700]/50 object-cover shadow-md" />
+                                                <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded bg-black text-[6px] font-black text-white badge-gold border border-[#FFD700] uppercase tracking-wider">{item.jabatan || 'Pelatih'}</div>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-white font-bold text-sm truncate">{item.pelatih}</div>
+                                                <div className="text-[10px] text-slate-400 uppercase tracking-wider font-bold truncate">{item.jabatan}</div>
+                                            </div>
+                                            <div className="text-[10px] bg-black/60 border border-white/10 px-2.5 py-1 rounded-lg text-[#FFD700] font-bold shadow-inner tracking-wide"><i className="far fa-clock mr-1"></i>{item.waktu}</div>
+                                        </div>
+                                        <div className="p-5 space-y-3.5 text-sm text-slate-300 font-medium">
+                                            <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 relative overflow-hidden">
+                                                <div className="absolute top-0 left-0 w-0.5 h-full bg-blue-500/50"></div>
+                                                <div className="text-[10px] text-blue-400 font-black mb-1.5 uppercase tracking-widest flex items-center gap-1.5"><i className="fas fa-running"></i> TEHNIK</div>
+                                                <div className="leading-relaxed">{item.koreksiTehnik}</div>
+                                            </div>
+                                            <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 relative overflow-hidden">
+                                                <div className="absolute top-0 left-0 w-0.5 h-full bg-green-500/50"></div>
+                                                <div className="text-[10px] text-green-400 font-black mb-1.5 uppercase tracking-widest flex items-center gap-1.5"><i className="fas fa-user-check"></i> SIKAP</div>
+                                                <div className="leading-relaxed">{item.koreksiSikap}</div>
+                                            </div>
+                                            {(item.teguran && item.teguran !== '-') && (<div className="p-3.5 bg-red-900/10 rounded-xl border border-red-500/20 relative overflow-hidden"><div className="absolute top-0 left-0 w-0.5 h-full bg-red-500/50"></div><div className="text-[10px] text-red-400 font-black mb-1.5 uppercase tracking-widest flex items-center gap-1.5"><i className="fas fa-exclamation-triangle"></i> TEGURAN</div><div className="leading-relaxed text-red-200/80">{item.teguran}</div></div>)}
+                                            
+                                            {(item.stars > 0 || (item.prestasi && item.prestasi !== '-')) && (
+                                                <div className="p-3.5 bg-cyan-900/10 rounded-xl border border-cyan-500/20 relative overflow-hidden">
+                                                    <div className="absolute top-0 left-0 w-0.5 h-full bg-cyan-500/50"></div>
+                                                    <div className="flex justify-between items-center mb-1.5">
+                                                        <div className="text-[10px] text-cyan-400 font-black uppercase tracking-widest flex items-center gap-1.5"><i className="fas fa-trophy"></i> PRESTASI</div>
+                                                        {item.stars > 0 && <StarRating count={item.stars} />}
+                                                    </div>
+                                                    {(item.prestasi && item.prestasi !== '-') && <div className="leading-relaxed text-cyan-200/80">{item.prestasi}</div>}
+                                                </div>
+                                            )}
+
+                                            {item.media && (<button onClick={() => onPhotoClick(item.media, 'Lampiran', 'badge-base')} className="w-full block text-center py-2.5 bg-blue-600/10 text-blue-400 text-xs rounded-xl border border-blue-600/30 hover:bg-blue-600/20 font-bold transition flex items-center justify-center gap-2"><i className="fas fa-paperclip"></i> LIHAT LAMPIRAN</button>)}
+                                        </div>
+                                        <div className="bg-black/20 p-4 border-t border-white/5">
+                                            <div className="flex items-center gap-2 mb-3"><i className="fas fa-comments text-slate-500 text-xs"></i><div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">BALASAN</div></div>
+                                            <div className="space-y-2 mb-4">{replies[item.id] && replies[item.id].length > 0 ? replies[item.id].map((r, i) => (<div key={i} className="text-xs bg-[#FFD700]/10 text-[#FFD700] p-3 rounded-xl rounded-tr-none border border-[#FFD700]/20 font-medium ml-4 relative">{r.text}</div>)) : <div className="text-[10px] text-slate-600 italic pl-1">Belum ada balasan</div>}</div>
+                                            {!isAdmin && (<div className="flex gap-2"><input disabled={input.sending} type="text" placeholder="Tulis balasan..." className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-medium text-white focus:border-[#FFD700]/30 outline-none disabled:opacity-50" value={input[item.id]||''} onChange={e => setInput({...input, [item.id]: e.target.value})} /><button disabled={input.sending} onClick={() => handleSendReply(item.id)} className="bg-gradient-to-r from-[#D4AF37] to-[#b45309] text-black w-9 h-9 rounded-xl flex items-center justify-center hover:scale-105 transition-transform shadow-lg disabled:opacity-50 disabled:scale-100"><i className="fas fa-paper-plane text-xs"></i></button></div>)}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function PelatihHistory({ user, onBack, onSelectHistory }) { 
+            const [history, setHistory] = useState([]); 
+            const [search, setSearch] = useState(''); 
+            const loadData = () => { 
+                setHistory([]); 
+                api.run('getCoachHistory', user.username).then(setHistory);
+            }; 
+            useEffect(() => { loadData(); }, []); 
+            const filteredHistory = history.filter(h => h.paskibraka.toLowerCase().includes(search.toLowerCase()) || h.isi.toLowerCase().includes(search.toLowerCase())); 
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[80vh] flex flex-col overflow-hidden relative animate-in">
+                    <div className="p-4 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <button onClick={onBack}><i className="fas fa-arrow-left text-white"></i></button>
+                                <h3 className="font-black text-white text-sm">RIWAYAT PELATIH</h3>
+                            </div>
+                            <button onClick={loadData} className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 hover:bg-blue-500/20"><i className="fas fa-sync"></i></button>
+                        </div>
+                        <input placeholder="Cari siswa atau isi koreksi..." className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:border-[#FFD700] outline-none" value={search} onChange={e => setSearch(e.target.value)} />
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                        {filteredHistory.length === 0 ? <div className="text-center text-slate-500 py-4">Tidak ada data.</div> : filteredHistory.map((h, i) => (
+                            <div key={i} onClick={() => onSelectHistory(h)} className="p-4 bg-white/5 border border-white/5 rounded-xl text-sm hover:bg-white/10 cursor-pointer transition group">
+                                <div className="flex justify-between items-center mb-1">
+                                    <div className="flex flex-col">
+                                        <span className="text-[#FFD700] font-bold text-xs">{h.tanggal}</span>
+                                        <span className="text-slate-500 text-[10px]"><i className="far fa-clock"></i> {h.waktu || '-'}</span>
+                                    </div>
+                                    <i className="fas fa-chevron-right text-slate-600 text-xs group-hover:text-white"></i>
+                                </div>
+                                <div className="font-black text-white text-sm mb-1 mt-1">{h.paskibraka}</div>
+                                <div className="text-slate-400 text-xs italic truncate">{h.isi}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            ); 
+        }
+
+        function PelatihHistoryDetail({ item, onBack, onPhotoClick }) { 
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[80vh] flex flex-col overflow-hidden animate-in">
+                    <div className="flex items-center gap-3 p-6 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none">
+                        <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/20"><i className="fas fa-arrow-left text-xs"></i></button>
+                        <div className="flex-1">
+                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">DETAIL RIWAYAT</div>
+                            <h3 className="font-black text-white text-lg">Kepada: {item.paskibraka}</h3>
+                            <div className="text-xs text-[#FFD700]">{item.tanggal} <span className="text-slate-500 mx-1">•</span> {item.waktu}</div>
+                        </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                        <div className="p-4 bg-white/5 rounded-xl border border-white/10"><div className="text-[10px] text-blue-400 font-bold mb-1 uppercase tracking-widest">TEHNIK</div><div className="text-sm font-medium text-white">{item.tehnik}</div></div>
+                        <div className="p-4 bg-white/5 rounded-xl border border-white/10"><div className="text-[10px] text-green-400 font-bold mb-1 uppercase tracking-widest">SIKAP</div><div className="text-sm font-medium text-white">{item.sikap}</div></div>
+                        {item.teguran && item.teguran !== '-' && (<div className="p-4 bg-red-500/10 rounded-xl border border-red-500/20"><div className="text-[10px] text-red-400 font-bold mb-1 uppercase tracking-widest">TEGURAN</div><div className="text-sm font-medium text-white">{item.teguran}</div></div>)}
+                        {item.prestasi && item.prestasi !== '-' && (
+                            <div className="p-4 bg-cyan-500/10 rounded-xl border border-cyan-500/20">
+                                <div className="flex justify-between items-center mb-1">
+                                     <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest">PRESTASI</div>
+                                     {item.stars > 0 && <StarRating count={item.stars} />}
+                                </div>
+                                <div className="text-sm font-medium text-white">{item.prestasi}</div>
+                            </div>
+                        )}
+                        {item.media && (
+                            <button onClick={() => onPhotoClick(item.media, 'Lampiran', 'badge-base')} className="w-full block text-center py-3 bg-blue-600/10 text-blue-400 text-xs rounded-xl border border-blue-600/30 hover:bg-blue-600/20 font-bold transition flex items-center justify-center gap-2">
+                                <i className="fas fa-paperclip"></i> LIHAT LAMPIRAN
+                            </button>
+                        )}
+                    </div>
+                </div>
+            ); 
+        }
+
+        // --- KOMPONEN REKAP EVALUASI PELATIHAN (ADMIN) ---
+        function AdminTrainingRecap({ onBack }) {
+            const [data, setData] = useState([]);
+            const [loading, setLoading] = useState(false);
+            const [mode, setMode] = useState('list'); // 'list', 'grafik', 'transkrip'
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+
+            const [startDate, setStartDate] = useState('');
+            const [endDate, setEndDate] = useState('');
+
+            const filteredData = React.useMemo(() => {
+                return data.filter(item => {
+                    if (!startDate && !endDate) return true; 
+                    
+                    const itemDate = new Date(item.rawDate);
+                    itemDate.setHours(0, 0, 0, 0);
+
+                    let isAfterStart = true;
+                    let isBeforeEnd = true;
+
+                    if (startDate) {
+                        const start = new Date(startDate);
+                        start.setHours(0, 0, 0, 0);
+                        isAfterStart = itemDate >= start;
+                    }
+                    if (endDate) {
+                        const end = new Date(endDate);
+                        end.setHours(23, 59, 59, 999); 
+                        isBeforeEnd = itemDate <= end;
+                    }
+
+                    return isAfterStart && isBeforeEnd;
+                });
+            }, [data, startDate, endDate]);
+
+            const loadFeedback = () => {
+                setLoading(true);
+                api.run('getTrainingFeedbackData')
+                    .then(res => {
+                        console.log("Data Evaluasi Pelatihan:", res); 
+                        if (Array.isArray(res)) setData(res);
+                        else setData([]);
+                    })
+                    .catch(err => {
+                        console.error("Gagal menarik data evaluasi:", err);
+                        setData([]); 
+                    })
+                    .finally(() => {
+                        setLoading(false);
+                    });
+            };
+
+            useEffect(() => { loadFeedback(); }, []);
+
+            const handleDelete = (id) => {
+                if (!confirm("Hapus feedback ini?")) return;
+                setLoading(true);
+                api.run('deleteTrainingFeedback', id).then(res => {
+                    alert(res.message);
+                    loadFeedback(); 
+                });
+            };
+
+            const handlePrint = () => window.print();
+
+            useEffect(() => {
+                if (mode === 'grafik' && chartRef.current && filteredData.length > 0) { 
+                    if (chartInstance.current) chartInstance.current.destroy();
+                    
+                    const aspectMap = {};
+                    filteredData.forEach(item => { 
+                        if (!aspectMap[item.aspek]) aspectMap[item.aspek] = { total: 0, count: 0 };
+                        aspectMap[item.aspek].total += item.rating;
+                        aspectMap[item.aspek].count += 1;
+                    });
+                    
+                    const labels = Object.keys(aspectMap);
+                    const values = labels.map(l => (aspectMap[l].total / aspectMap[l].count).toFixed(1));
+
+                    const ctx = chartRef.current.getContext('2d');
+                    chartInstance.current = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Rata-rata Rating (1-5)',
+                                data: values,
+                                backgroundColor: 'rgba(212, 175, 55, 0.6)',
+                                borderColor: '#FFD700',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: { beginAtZero: true, max: 5, ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                                x: { ticks: { color: 'white' }, grid: { display: false } }
+                            },
+                            plugins: { legend: { labels: { color: 'white' } } }
+                        }
+                    });
+                }
+                
+                return () => {
+                    if (chartInstance.current) chartInstance.current.destroy();
+                };
+            }, [mode, filteredData]);
+
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                    <div className="p-5 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none no-print">
+                        <div className="flex justify-between items-center mb-4">
+                            <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/20"><i className="fas fa-arrow-left text-xs"></i></button>
+                            <h3 className="font-black text-white tracking-wide uppercase text-sm">REKAP EVALUASI PELATIHAN</h3>
+                            <button onClick={handlePrint} className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center hover:bg-purple-500/40"><i className="fas fa-print"></i></button>
+                        </div>
+                        
+                        <div className="flex gap-2 bg-black/40 p-1 rounded-lg mb-3">
+                            {['list', 'grafik', 'transkrip'].map(m => (
+                                <button key={m} onClick={() => setMode(m)} className={`flex-1 py-2 rounded text-[10px] font-bold uppercase transition ${mode === m ? 'bg-purple-600 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'}`}>
+                                    {m}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex gap-2 bg-white/5 p-2 rounded-xl border border-white/10 no-print">
+                            <div className="flex-1">
+                                <label className="block text-[9px] text-slate-400 font-bold mb-1 uppercase tracking-widest">DARI TANGGAL</label>
+                                <input type="date" className="w-full p-2 bg-black/40 border border-white/10 rounded-lg text-xs text-white outline-none focus:border-purple-500" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                            </div>
+                            <div className="flex-1">
+                                <label className="block text-[9px] text-slate-400 font-bold mb-1 uppercase tracking-widest">SAMPAI TANGGAL</label>
+                                <input type="date" className="w-full p-2 bg-black/40 border border-white/10 rounded-lg text-xs text-white outline-none focus:border-purple-500" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                            </div>
+                            {(startDate || endDate) && (
+                                <div className="flex items-end">
+                                    <button onClick={() => {setStartDate(''); setEndDate('');}} className="h-[34px] px-3 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500 hover:text-white transition" title="Hapus Filter">
+                                        <i className="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-black/20 print-area">
+                        {loading ? <div className="loader mx-auto mt-10 no-print"></div> : (
+                            <>
+                                {mode === 'list' && (
+                                    <div className="space-y-3 no-print">
+                                        {filteredData.length === 0 ? <div className="text-center text-slate-500 text-xs mt-10">Data tidak ditemukan pada rentang tanggal tersebut.</div> : 
+                                         filteredData.map((item, i) => (
+                                            <div key={i} className="bg-[#0f1423]/80 border border-white/10 rounded-xl p-4 relative group hover:border-purple-500/30 transition">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${item.role === 'Pelatih' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'}`}>{item.role}</span>
+                                                            <span className="text-xs font-bold text-white">{item.nama}</span>
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-400 mt-0.5">{String(item.tanggal)}</div>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 text-[#FFD700] text-xs font-bold bg-[#FFD700]/10 px-2 py-1 rounded-lg border border-[#FFD700]/20">
+                                                        <i className="fas fa-star"></i> {item.rating}
+                                                    </div>
+                                                </div>
+                                                <div className="bg-black/30 p-3 rounded-lg border border-white/5 mb-2">
+                                                    <div className="text-[10px] text-purple-400 font-bold mb-1 uppercase tracking-wider">{item.aspek}</div>
+                                                    <p className="text-sm text-slate-200">{item.isi}</p>
+                                                </div>
+                                                <div className="flex justify-end">
+                                                    <button onClick={() => handleDelete(item.id)} className="px-3 py-1.5 rounded bg-red-500/10 text-red-500 text-[10px] font-bold border border-red-500/20 hover:bg-red-500 hover:text-white transition">
+                                                        <i className="fas fa-trash mr-1"></i> HAPUS
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {mode === 'grafik' && (
+                                    <div className="h-full flex flex-col no-print">
+                                        <div className="bg-black/40 p-4 rounded-xl border border-white/10 flex-1 min-h-[300px]">
+                                            <canvas ref={chartRef}></canvas>
+                                        </div>
+                                        <div className="mt-4 grid grid-cols-2 gap-4">
+                                            <div className="bg-white/5 p-4 rounded-xl text-center">
+                                                <div className="text-2xl font-black text-white">{filteredData.length}</div>
+                                                <div className="text-[10px] text-slate-400 uppercase">Total Masukan</div>
+                                            </div>
+                                            <div className="bg-white/5 p-4 rounded-xl text-center">
+                                                <div className="text-2xl font-black text-[#FFD700]">
+                                                    {(filteredData.reduce((acc, curr) => acc + curr.rating, 0) / (filteredData.length || 1)).toFixed(1)}
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 uppercase">Rata-rata Rating</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {mode === 'transkrip' && (
+                                    <div className="bg-white text-black p-8 min-h-full rounded-none">
+                                        <div className="text-center border-b-2 border-black pb-4 mb-6">
+                                            <h2 className="text-xl font-bold uppercase">REKAP EVALUASI PELATIHAN</h2>
+                                            <p className="text-sm">PASKIBRAKA KOTA YOGYAKARTA 2026</p>
+                                            <p className="text-xs mt-1">Dicetak pada: {new Date().toLocaleDateString('id-ID')}</p>
+                                            {(startDate || endDate) && (
+                                                <p className="text-xs font-bold mt-1 text-purple-700">
+                                                    Periode: {startDate ? new Date(startDate).toLocaleDateString('id-ID') : 'Awal'} s.d {endDate ? new Date(endDate).toLocaleDateString('id-ID') : 'Akhir'}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', fontFamily: 'Arial' }}>
+                                            <thead>
+                                                <tr style={{ backgroundColor: '#f0f0f0' }}>
+                                                    <th style={{ border: '1px solid black', padding: '5px', width: '30px' }}>No</th>
+                                                    <th style={{ border: '1px solid black', padding: '5px', width: '100px' }}>Waktu</th>
+                                                    <th style={{ border: '1px solid black', padding: '5px', width: '120px' }}>Pengirim</th>
+                                                    <th style={{ border: '1px solid black', padding: '5px' }}>Aspek & Masukan</th>
+                                                    <th style={{ border: '1px solid black', padding: '5px', width: '40px', textAlign: 'center' }}>Rating</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {filteredData.map((item, idx) => (
+                                                    <tr key={idx}>
+                                                        <td style={{ border: '1px solid black', padding: '5px', textAlign: 'center' }}>{idx + 1}</td>
+                                                        <td style={{ border: '1px solid black', padding: '5px' }}>{item.tanggal}</td>
+                                                        <td style={{ border: '1px solid black', padding: '5px' }}>
+                                                            <strong>{item.nama}</strong><br/>
+                                                            <span style={{ fontStyle: 'italic' }}>({item.role})</span>
+                                                        </td>
+                                                        <td style={{ border: '1px solid black', padding: '5px' }}>
+                                                            <div style={{ fontWeight: 'bold', marginBottom: '2px', textDecoration:'underline' }}>{item.aspek}</div>
+                                                            <div>{item.isi}</div>
+                                                        </td>
+                                                        <td style={{ border: '1px solid black', padding: '5px', textAlign: 'center', fontWeight: 'bold' }}>{item.rating}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<AdminApp />);
+    </script>
+</body>
+</html>
