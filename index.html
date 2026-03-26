@@ -22,6 +22,24 @@
         function LoginApp() {
             const [view, setView] = useState('login');
             const [loading, setLoading] = useState(false);
+            
+            // --- FIX BLANK SCREEN: SISTEM MENUNGGU SHARED.JS ---
+            const [isReady, setIsReady] = useState(false);
+            useEffect(() => {
+                let attempts = 0;
+                const timer = setInterval(() => {
+                    attempts++;
+                    // Cek apakah shared.js sudah selesai dibaca oleh browser
+                    if (window.Background3D && window.api) {
+                        setIsReady(true);
+                        clearInterval(timer);
+                    } else if (attempts > 100) { // Timeout jika gagal setelah 10 detik
+                        clearInterval(timer);
+                        alert("Gagal memuat sistem. Harap periksa koneksi internet Anda atau refresh halaman.");
+                    }
+                }, 100);
+                return () => clearInterval(timer);
+            }, []);
 
             const handleLogin = async (username, password, type) => {
                 setLoading(true);
@@ -45,6 +63,9 @@
                 } catch (e) { alert(e.message); }
                 setLoading(false);
             };
+
+            // JIKA BELUM READY, TAMPILKAN LOADER (MENCEGAH CRASH HITAM)
+            if (!isReady) return <div className="min-h-screen flex flex-col items-center justify-center bg-[#050505]"><div className="loader mb-4"></div><p className="text-[#FFD700] text-xs font-bold tracking-widest animate-pulse">SINKRONISASI APLIKASI...</p></div>;
 
             return (
                 <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -178,6 +199,9 @@
                 </div>
             );
         }
+        
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<LoginApp />);
     </script>
 </body>
 </html>
