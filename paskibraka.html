@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard Paskibraka</title>
+    <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/a/a0/Logo_dppi_512.png">
+    
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script type="text/babel" src="shared.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function PaskibApp() {
+            const [user, setUser] = useState(null);
+            const [view, setView] = useState('home');
+            const [loading, setLoading] = useState(false);
+            const [lightboxData, setLightboxData] = useState(null);
+
+            useEffect(() => {
+                const stored = localStorage.getItem('currentUser');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if(parsed.role !== 'paskibraka') { alert("Akses Ditolak"); window.location.href = "index.html"; }
+                    else setUser(parsed.data);
+                } else { window.location.href = "index.html"; }
+            }, []);
+
+            const handleLogout = () => { localStorage.removeItem('currentUser'); window.location.href = "index.html"; };
+
+            const handleRefreshProfile = async () => {
+                if (!user) return; setLoading(true);
+                try {
+                    const res = await window.api.run('loginUser', user.nik, user.password, 'paskibraka');
+                    if (res.status === 'success') { 
+                        setUser(res.data); localStorage.setItem('currentUser', JSON.stringify({role:'paskibraka', data:res.data})); alert("Data Tersinkronisasi"); 
+                    }
+                } catch(e) { console.error(e); } setLoading(false);
+            };
+
+            const openPhoto = (src, badgeText, badgeClass) => { if(src) setLightboxData({ src, badgeText, badgeClass }); };
+
+            const handleShowStarHistory = async (nik) => {
+                setLoading(true);
+                try { const history = await window.api.run('getStarHistory', nik); setView({ name: 'star-history', data: history }); } 
+                catch(e) { console.error(e); alert("Gagal memuat riwayat bintang"); } setLoading(false);
+            };
+
+            const handleEditSuccess = () => { alert("Profil diubah. Silakan Login Ulang."); handleLogout(); };
+
+            if (!user) return <div className="flex h-screen items-center justify-center"><div className="loader"></div></div>;
+
+            return (
+                 <div className="min-h-screen flex flex-col items-center justify-center p-4">
+                    <window.Background3D />
+                    <div className="w-full max-w-lg relative z-0 mt-4 mb-4">
+                        {view === 'home' && <PaskibDashboard user={user} onLogout={handleLogout} onViewEvals={() => setView('eval-list')} onEditProfile={() => setView('edit-profile')} onRefresh={handleRefreshProfile} loading={loading} onPhotoClick={openPhoto} onShowStarHistory={handleShowStarHistory} onTrainingFeedback={() => setView('training-feedback')} />}
+                        {view === 'eval-list' && <PaskibEvalList user={user} onBack={() => setView('home')} onSelectDate={(data) => setView({ name: 'eval-detail', data })} />}
+                        {view === 'edit-profile' && <EditProfile user={user} role="paskibraka" onBack={() => setView('home')} onSuccess={handleEditSuccess} />}
+                        {view?.name === 'eval-detail' && <PaskibEvalDetail data={view.data} user={user} onBack={() => setView('eval-list')} onPhotoClick={openPhoto} />}
+                        {view?.name === 'star-history' && <StarHistoryList data={view.data} onBack={() => setView('home')} />}
+                        {view === 'training-feedback' && <window.TrainingFeedbackForm user={user} role="paskibraka" onBack={() => setView('home')} />}
+                    </div>
+                    <window.MediaModal src={lightboxData?.src} badgeText={lightboxData?.badgeText} badgeClass={lightboxData?.badgeClass} onClose={() => setLightboxData(null)} />
+                </div>
+            );
+        }
+
+        function PaskibDashboard({ user, onLogout, onViewEvals, onEditProfile, onRefresh, loading, onPhotoClick, onShowStarHistory, onTrainingFeedback }) {
+            const emblemClass = window.getBadgeClass(user.penugasan);
+            const [bioEnabled, setBioEnabled] = useState(localStorage.getItem('paskib_bio_enabled') === 'true');
+
+            const toggleBiometric = () => {
+                const newState = !bioEnabled; setBioEnabled(newState); localStorage.setItem('paskib_bio_enabled', newState);
+                if (newState) { localStorage.setItem('bio_creds', JSON.stringify({ user: user.nik, pass: user.password, role: 'paskibraka' })); alert("Login Cepat (Biometrik UI) berhasil diaktifkan!"); } 
+                else { localStorage.removeItem('bio_creds'); alert("Login Cepat dinonaktifkan."); }
+            };
+            return (
+                <div className="os-window p-5 rounded-[2rem] h-[85vh] animate-in flex flex-col relative">
+                    <div className="flex-none mb-4 flex justify-between items-center border-b border-white/10 pb-4">
+                        <h2 className="text-lg font-black text-white">DASHBOARD</h2><div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-white badge-base ${emblemClass}`}>{user.penugasan}</div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6 p-1">
+                         <div className="bg-black/40 border border-white/10 rounded-[2rem] p-6 text-center relative overflow-hidden group">
+                             <div className="relative inline-block mt-2 mb-4 cursor-pointer" onClick={() => onPhotoClick(user.foto, user.penugasan, emblemClass)}>
+                                <img src={user.foto} className="w-28 h-28 rounded-full border-2 border-[#FFD700] object-cover relative z-10 shadow-[0_0_20px_rgba(255,215,0,0.3)]" />
+                            </div>
+                            <h2 className="text-xl font-black text-white tracking-tight drop-shadow-md">{user.nama}</h2>
+                            <p className="text-[#FFD700] text-sm font-bold tracking-wide mb-1">{user.lapangan}</p>
+                             <div className="flex justify-center gap-2 mt-4">
+                                <button onClick={onEditProfile} className="px-4 py-1.5 rounded-full border border-white/20 text-[10px] font-bold hover:bg-white/10 transition">EDIT PROFIL</button>
+                                <button onClick={onRefresh} className="px-3 py-1.5 rounded-full border border-blue-500/30 text-[10px] font-bold hover:bg-blue-500/20 text-blue-400 transition flex items-center gap-1">{loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-sync"></i>} SYNC</button>
+                            </div>
+                        </div>
+
+                        <div onClick={() => !loading && onShowStarHistory(user.nik)} className="bg-gradient-to-r from-black/60 to-[#FFD700]/10 border border-[#FFD700]/30 rounded-2xl p-4 flex items-center justify-between shadow-[0_0_15px_rgba(212,175,55,0.1)] cursor-pointer hover:border-[#FFD700] transition group">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-[#FFD700] flex items-center justify-center text-black shadow-[0_0_10px_#FFD700] group-hover:scale-110 transition"><i className="fas fa-star text-lg"></i></div>
+                                <div><div className="text-[10px] text-slate-400 uppercase tracking-widest font-bold group-hover:text-white">TOTAL BINTANG</div><div className="text-xs text-slate-500 group-hover:text-slate-300">Klik untuk riwayat</div></div>
+                            </div>
+                            <div className="text-3xl font-black text-white">{loading ? <i className="fas fa-spinner fa-spin text-2xl"></i> : (user.totalStars || 0)}</div>
+                        </div>
+
+                        <window.FullProfileCard user={user} type="paskibraka" />
+
+                        <div className="bg-black/40 border border-white/10 rounded-2xl p-4 flex justify-between items-center mt-3 shadow-lg">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${bioEnabled ? 'bg-green-500/20 text-green-400 shadow-[0_0_10px_rgba(74,222,128,0.3)]' : 'bg-white/10 text-slate-400'}`}><i className="fas fa-fingerprint text-xl"></i></div>
+                                <div><div className="text-xs font-bold text-white uppercase">Login Biometrik</div><div className="text-[9px] text-slate-400">Sidik Jari / Face ID</div></div>
+                            </div>
+                            <button onClick={toggleBiometric} className={`px-4 py-2 rounded-lg text-[10px] font-bold transition ${bioEnabled ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30'}`}>{bioEnabled ? 'MATIKAN' : 'AKTIFKAN'}</button>
+                        </div>
+                        <div className="space-y-3 pb-4">
+                            <button onClick={onViewEvals} className="w-full btn-gold py-4 rounded-2xl flex items-center justify-between px-6 shadow-lg"><span className="font-black tracking-widest text-sm">LIHAT EVALUASI</span><i className="fas fa-chevron-right"></i></button>
+                            <button onClick={onTrainingFeedback} className="w-full bg-gradient-to-r from-blue-600 to-blue-500 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg"><i className="fas fa-bullhorn text-white"></i><span className="font-black text-white text-xs tracking-widest">EVALUASI PELATIHAN</span></button>
+                            <button onClick={onLogout} className="w-full bg-black/40 border border-red-500/30 text-red-500 py-3 rounded-2xl text-xs font-bold">LOGOUT SYSTEM</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function PaskibEvalList({ user, onBack, onSelectDate }) {
+            const [evals, setEvals] = useState(null); const [search, setSearch] = useState(''); const loadData = () => { setEvals(null); window.api.run('getEvaluasiByDate', user.nik).then(setEvals); }; useEffect(() => { loadData(); }, []); const filteredKeys = evals ? Object.keys(evals).filter(k => { const q = search.toLowerCase(); const item = evals[k]; if (item.display.toLowerCase().includes(q)) return true; return item.list.some(d => d.pelatih.toLowerCase().includes(q) || d.waktu.toLowerCase().includes(q) || d.koreksiTehnik.toLowerCase().includes(q)); }) : [];
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[80vh] flex flex-col overflow-hidden relative">
+                    <div className="p-4 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none">
+                        <div className="flex items-center justify-between mb-4">
+                            <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/20"><i className="fas fa-arrow-left text-xs"></i></button>
+                            <h3 className="font-black text-gold-gradient tracking-wide">RIWAYAT EVALUASI</h3>
+                            <button onClick={loadData} className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 hover:bg-blue-500/20"><i className="fas fa-sync"></i></button>
+                        </div>
+                        <input placeholder="Cari..." className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:border-[#FFD700] outline-none" value={search} onChange={e => setSearch(e.target.value)} />
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                        {!evals ? <div className="text-center py-10"><div className="loader mx-auto"></div></div> : filteredKeys.length === 0 ? <div className="text-center text-slate-500 py-10 font-medium">Data tidak ditemukan.</div> : <div className="space-y-3">{filteredKeys.map(dateKey => (<div key={dateKey} onClick={() => onSelectDate(evals[dateKey])} className="p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-blue-500/20 cursor-pointer transition-all"><div className="flex justify-between items-center"><div><div className="font-bold text-white text-sm">{evals[dateKey].display}</div><div className="text-[10px] text-slate-400 mt-1 font-medium">{evals[dateKey].list.length} Catatan</div></div><i className="fas fa-chevron-right text-slate-600"></i></div></div>))}</div>}
+                    </div>
+                </div>
+            );
+        }
+
+        function PaskibEvalDetail({ data, user, onBack, onPhotoClick }) {
+            const [replies, setReplies] = useState({}); const [input, setInput] = useState({}); const [search, setSearch] = useState(''); useEffect(() => { data.list.forEach(item => { window.api.run('getReplies', item.id).then(res => setReplies(prev => ({...prev, [item.id]: res}))); }); }, [data]); const handleSendReply = async (evalId) => { const text = input[evalId]; if (!text) return; await window.api.run('submitReply', evalId, user.nik, text); const newReplies = await window.api.run('getReplies', evalId); setReplies(prev => ({...prev, [evalId]: newReplies})); setInput(prev => ({...prev, [evalId]: ''})); }; const filteredList = data.list.filter(item => item.pelatih.toLowerCase().includes(search.toLowerCase()) || item.koreksiTehnik.toLowerCase().includes(search.toLowerCase()));
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                    <div className="flex items-center gap-4 p-5 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none">
+                        <button onClick={onBack} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white"><i className="fas fa-arrow-left text-sm"></i></button>
+                        <div className="flex-1"><h3 className="font-black text-white text-base tracking-wide drop-shadow-md">{data.display}</h3><div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">DETAIL KOREKSIAN</div></div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-black/20">
+                        <div className="mb-6 relative"><i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i><input placeholder="Cari..." className="w-full pl-10 pr-4 py-3 bg-black/40 border border-white/10 rounded-2xl text-sm text-white outline-none" value={search} onChange={e => setSearch(e.target.value)} /></div>
+                        <div className="space-y-6 pb-10">
+                            {filteredList.map((item, idx) => (
+                                <div key={idx} className="bg-[#0f1423]/60 border border-white/10 rounded-2xl relative overflow-hidden shadow-lg group">
+                                    <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#D4AF37] to-[#b45309]"></div>
+                                    <div className="flex items-center gap-3 p-4 bg-white/5 border-b border-white/5">
+                                        <div className="relative cursor-pointer" onClick={() => onPhotoClick(item.fotoPelatih || 'https://via.placeholder.com/150?text=Pelatih', item.jabatan, 'badge-gold')}>
+                                            <img src={item.fotoPelatih || 'https://via.placeholder.com/150?text=Pelatih'} className="w-11 h-11 rounded-full border-2 border-[#FFD700]/50 object-cover" />
+                                        </div>
+                                        <div className="flex-1 min-w-0"><div className="text-white font-bold text-sm truncate">{item.pelatih}</div><div className="text-[10px] text-slate-400 uppercase tracking-wider font-bold truncate">{item.jabatan}</div></div>
+                                        <div className="text-[10px] bg-black/60 border border-white/10 px-2.5 py-1 rounded-lg text-[#FFD700] font-bold"><i className="far fa-clock mr-1"></i>{item.waktu}</div>
+                                    </div>
+                                    <div className="p-5 space-y-3.5 text-sm text-slate-300 font-medium">
+                                        <div className="p-3.5 bg-black/30 rounded-xl border border-white/5"><div className="text-[10px] text-blue-400 font-black mb-1.5 uppercase tracking-widest"><i className="fas fa-running"></i> TEHNIK</div><div className="leading-relaxed">{item.koreksiTehnik}</div></div>
+                                        <div className="p-3.5 bg-black/30 rounded-xl border border-white/5"><div className="text-[10px] text-green-400 font-black mb-1.5 uppercase tracking-widest"><i className="fas fa-user-check"></i> SIKAP</div><div className="leading-relaxed">{item.koreksiSikap}</div></div>
+                                        {(item.teguran && item.teguran !== '-') && (<div className="p-3.5 bg-red-900/10 rounded-xl border border-red-500/20"><div className="text-[10px] text-red-400 font-black mb-1.5 uppercase tracking-widest"><i className="fas fa-exclamation-triangle"></i> TEGURAN</div><div className="leading-relaxed text-red-200/80">{item.teguran}</div></div>)}
+                                        {(item.stars > 0 || (item.prestasi && item.prestasi !== '-')) && (
+                                            <div className="p-3.5 bg-cyan-900/10 rounded-xl border border-cyan-500/20">
+                                                <div className="flex justify-between items-center mb-1.5"><div className="text-[10px] text-cyan-400 font-black uppercase tracking-widest"><i className="fas fa-trophy"></i> PRESTASI</div>{item.stars > 0 && <window.StarRating count={item.stars} />}</div>
+                                                {(item.prestasi && item.prestasi !== '-') && <div className="leading-relaxed text-cyan-200/80">{item.prestasi}</div>}
+                                            </div>
+                                        )}
+                                        {item.media && (<button onClick={() => onPhotoClick(item.media, 'Lampiran', 'badge-base')} className="w-full block text-center py-2.5 bg-blue-600/10 text-blue-400 text-xs rounded-xl border border-blue-600/30 font-bold"><i className="fas fa-paperclip"></i> LIHAT LAMPIRAN</button>)}
+                                    </div>
+                                    <div className="bg-black/20 p-4 border-t border-white/5">
+                                        <div className="flex items-center gap-2 mb-3"><i className="fas fa-comments text-slate-500 text-xs"></i><div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">BALASAN</div></div>
+                                        <div className="space-y-2 mb-4">{replies[item.id] && replies[item.id].length > 0 ? replies[item.id].map((r, i) => (<div key={i} className="text-xs bg-[#FFD700]/10 text-[#FFD700] p-3 rounded-xl rounded-tr-none border border-[#FFD700]/20 font-medium ml-4 relative">{r.text}</div>)) : <div className="text-[10px] text-slate-600 italic pl-1">Belum ada balasan</div>}</div>
+                                        <div className="flex gap-2"><input type="text" placeholder="Tulis balasan..." className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none" value={input[item.id]||''} onChange={e => setInput({...input, [item.id]: e.target.value})} /><button onClick={() => handleSendReply(item.id)} className="bg-gradient-to-r from-[#D4AF37] to-[#b45309] text-black w-9 h-9 rounded-xl flex items-center justify-center"><i className="fas fa-paper-plane text-xs"></i></button></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function StarHistoryList({ data, onBack }) {
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                    <div className="p-5 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none flex items-center justify-between">
+                        <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center"><i className="fas fa-arrow-left text-xs text-white"></i></button>
+                        <h3 className="font-black text-gold-gradient tracking-wide text-sm">RIWAYAT BINTANG</h3><div className="w-8"></div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-black/20 space-y-4">
+                        {data.length === 0 ? <div className="text-center text-slate-500 py-10 text-xs">Belum ada riwayat bintang.</div> : data.map((item, idx) => {
+                            const isNeg = item.stars < 0; const bColor = isNeg ? 'border-red-500/30' : 'border-[#FFD700]/30'; const bg = isNeg ? 'bg-red-900/10' : 'bg-[#0f1423]/60'; const sColor = isNeg ? 'text-red-500' : 'text-[#FFD700]';
+                            return (
+                                <div key={idx} className={`${bg} border ${bColor} rounded-xl p-4 relative overflow-hidden group`}>
+                                    <div className="flex justify-between items-start mb-2 relative z-10">
+                                        <div><div className="font-bold text-white text-sm">{item.pelatih}</div><div className="text-[10px] text-slate-400 uppercase font-bold">{item.jabatan}</div></div>
+                                        <div className="text-right"><window.StarRating count={item.stars} /><div className={`text-[9px] mt-1 font-bold ${sColor}`}>{item.tanggal}</div></div>
+                                    </div>
+                                    <div className="relative z-10 p-3 bg-black/40 rounded-lg border border-white/5 mt-2"><div className="text-[10px] text-slate-500 font-bold mb-1 uppercase">{isNeg ? 'ALASAN PENGURANGAN' : 'KETERANGAN'}</div><div className="text-xs text-white italic">"{item.keterangan}"</div></div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        }
+
+        function EditProfile({ user, role, onBack, onSuccess }) { 
+            const [pass, setPass] = useState(''); const [file, setFile] = useState(null); const [loading, setLoading] = useState(false);
+            const handleSave = () => { 
+                if (!pass && !file) return alert("Tidak ada perubahan"); setLoading(true);
+                const payload = { password: pass }; 
+                const send = (p) => { window.api.run('updateProfile', role, user.nik, p).then(res => { setLoading(false); alert(res.message); if(res.status === 'success') onSuccess(pass); }); }; 
+                if(file) { const r = new FileReader(); r.onload = e => { payload.fotoData = e.target.result.split(',')[1]; payload.fotoMime = file.type; send(payload); }; r.readAsDataURL(file); } else send(payload); 
+            }; 
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                    <div className="p-6 pb-4 border-b border-white/10 bg-[#050505]/80 text-center"><h3 className="font-black text-white uppercase">EDIT PROFIL</h3></div>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                        <input disabled={loading} placeholder="Password Baru" type="password" className="w-full p-3 os-input rounded-xl text-sm" onChange={e => setPass(e.target.value)} />
+                        <div><label className="text-xs text-slate-400 mb-1 block font-bold">Ganti Foto Profil</label><input disabled={loading} type="file" className="w-full p-2 os-input rounded-xl text-xs" onChange={e => setFile(e.target.files[0])} /></div>
+                    </div>
+                    <div className="p-4 border-t border-white/10 bg-[#050505]/80 flex gap-3">
+                        <button disabled={loading} onClick={onBack} className="flex-1 py-3 text-xs font-bold text-slate-400">BATAL</button>
+                        <button onClick={handleSave} disabled={loading} className="flex-1 btn-gold py-3 rounded-xl text-xs font-bold">{loading ? "SIMPAN..." : "SIMPAN"}</button>
+                    </div>
+                </div>
+            ); 
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<PaskibApp />);
+    </script>
+</body>
+</html>
