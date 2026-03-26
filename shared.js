@@ -78,7 +78,7 @@ window.MediaModal = function({ src, badgeText, badgeClass, onClose }) {
 }
 
 window.PasswordDisplay = function({ password }) {
-    const [show, ReactuseState] = React.useState(false);
+    const [show, ReactuseState] = ReactuseState(false);
     return (
         <div className="flex justify-between items-center w-full">
             <span className={show ? "font-mono font-bold text-white drop-shadow-md" : "font-mono font-bold text-slate-500"}>
