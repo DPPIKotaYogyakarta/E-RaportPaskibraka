@@ -107,4 +107,156 @@
                         </div>
                         <div className="flex flex-col gap-3">
                             <button onClick={onStartEval} className="bg-black/40 border border-green-500/30 rounded-2xl p-5 flex flex-col items-center gap-2 hover:bg-white/10 w-full"><div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-600 to-green-400 flex items-center justify-center text-white text-xl"><i className="fas fa-edit"></i></div><span className="text-xs font-bold text-white uppercase">INPUT EVALUASI</span></button>
-                            <button onClick={onTrainingFeedback} className="bg-black/40
+                            <button onClick={onTrainingFeedback} className="bg-black/40 border border-blue-500/30 rounded-2xl p-5 flex flex-col items-center gap-2 hover:bg-white/10 w-full"><div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl"><i className="fas fa-bullhorn"></i></div><span className="text-xs font-bold text-white uppercase">EVALUASI PELATIHAN</span></button>
+                            <button onClick={onHistory} className="bg-black/40 border border-white/10 rounded-2xl p-5 flex flex-col items-center gap-2 hover:bg-white/10 w-full"><div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-slate-300 text-xl"><i className="fas fa-history"></i></div><span className="text-xs font-bold text-slate-300 uppercase">RIWAYAT SAYA</span></button>
+                        </div>
+                        <button onClick={onLogout} className="w-full bg-red-900/20 border border-red-500/30 text-red-500 py-3 rounded-xl text-xs font-bold">LOGOUT</button>
+                    </div>
+                </div>
+            );
+        }
+
+        function PelatihSelectMember({ onBack, onSelect }) {
+            const [members, setMembers] = useState(null); const [search, setSearch] = useState('');
+            const loadData = () => { setMembers(null); window.api.run('getAllPaskibraka').then(res => setMembers(Array.isArray(res)?res:[])).catch(()=>setMembers([])); };
+            useEffect(() => { loadData(); }, []);
+            const filtered = members ? members.filter(m => (m.nama||"").toLowerCase().includes(search.toLowerCase())) : [];
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[80vh] flex flex-col overflow-hidden relative animate-in">
+                    <div className="p-4 border-b border-white/10 bg-[#050505]/80 flex-none">
+                        <div className="flex items-center gap-3 mb-4"><button onClick={onBack}><i className="fas fa-arrow-left text-white"></i></button><div className="flex-1 text-center font-bold text-white">PILIH PASKIBRAKA</div></div>
+                        <div className="relative"><input placeholder="Cari Siswa..." className="w-full bg-white/5 border border-white/10 rounded-xl pl-4 py-2 text-sm text-white" onChange={e => setSearch(e.target.value)} value={search} /></div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+                        {members === null ? <div className="text-center py-20"><div className="loader mx-auto"></div></div> : filtered.length === 0 ? <div className="text-center py-10 text-slate-500 text-xs">Tidak ada Paskibraka Aktif</div> : filtered.map((m, i) => (
+                            <div key={i} onClick={() => onSelect(m)} className="flex items-center gap-3 p-3 bg-black/30 border border-white/5 rounded-xl cursor-pointer hover:bg-blue-500/10">
+                                <img src={m.foto} className="w-10 h-10 rounded-full object-cover" />
+                                <div className="flex-1"><div className="text-sm font-bold text-white">{m.nama}</div><div className="text-[10px] text-gold-gradient font-bold">{m.lapangan}</div></div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function PelatihMemberDetail({ member, user, onBack, onAddEval, onPhotoClick }) {
+            const [evals, setEvals] = useState(null); const [selectedDateData, setSelectedDateData] = useState(null); 
+            useEffect(() => { window.api.run('getEvaluasiByDate', member.nik).then(setEvals); }, [member]);
+            if (selectedDateData) return <PaskibEvalDetail data={selectedDateData} user={user} onBack={() => setSelectedDateData(null)} isAdmin={true} onPhotoClick={onPhotoClick} />;
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[80vh] flex flex-col overflow-hidden relative animate-in">
+                    <div className="p-4 border-b border-white/10 bg-[#050505]/80 flex-none flex items-center justify-between"><button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5"><i className="fas fa-arrow-left text-xs"></i></button><div className="text-center"><h3 className="font-black text-white">{member.nama}</h3><div className="text-[10px] text-slate-400">Riwayat Evaluasi</div></div><div className="w-8"></div></div>
+                    <div className="flex-1 overflow-y-auto p-4 pb-20 custom-scrollbar">
+                        {!evals ? <div className="text-center py-10"><div className="loader mx-auto"></div></div> : Object.keys(evals).length === 0 ? <div className="text-center text-slate-500 py-10">Belum ada evaluasi.</div> : <div className="space-y-3">{Object.keys(evals).map(dateKey => (<div key={dateKey} onClick={() => setSelectedDateData(evals[dateKey])} className="p-4 bg-white/5 border border-white/10 rounded-xl cursor-pointer"><div className="font-bold text-white text-sm">{evals[dateKey].display}</div><div className="text-[10px] text-slate-400">{evals[dateKey].list.length} Catatan</div></div>))}</div>}
+                    </div>
+                    <div className="absolute bottom-4 left-0 w-full px-4 z-20"><button onClick={onAddEval} className="w-full btn-green py-4 rounded-xl font-black text-sm"><i className="fas fa-plus"></i> TAMBAH KOREKSI</button></div>
+                </div>
+            );
+        }
+
+        function PelatihEvalForm({ member, user, onBack }) { 
+            const [form, setForm] = useState({ date: '', time: '', tehnik: '', sikap: '', teguran: '', prestasi: '', stars: 0 }); 
+            useEffect(() => { const now = new Date(); setForm(p => ({...p, date: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`, time: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`})); }, []);
+            const [file, setFile] = useState(null); const [loading, setLoading] = useState(false); 
+            const handleSubmit = () => { 
+                setLoading(true); const payload = { ...form, paskibrakaNik: member.nik, coachUsername: user.username, coachName: user.nama, coachJob: user.jabatan }; 
+                const send = (p) => { window.api.run('addEvaluation', p).then(res => { alert(res.message); setLoading(false); onBack(); }); }; 
+                if (file) { const reader = new FileReader(); reader.onload = (e) => { payload.mediaData = e.target.result.split(',')[1]; payload.mediaMime = file.type; send(payload); }; reader.readAsDataURL(file); } else send(payload); 
+            }; 
+            return (
+            <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                <div className="p-6 pb-4 border-b border-white/10 bg-[#050505]/80 text-center"><div className="text-[10px] text-slate-400 font-bold">INPUT KOREKSI BARU</div><h2 className="text-xl font-black text-[#FFD700]">{member.nama}</h2></div>
+                <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                    <textarea disabled={loading} placeholder="Koreksi Tehnik" rows="3" className="w-full p-3 os-input rounded-xl" onChange={e => setForm({...form, tehnik: e.target.value})}></textarea>
+                    <textarea disabled={loading} placeholder="Koreksi Sikap" rows="3" className="w-full p-3 os-input rounded-xl" onChange={e => setForm({...form, sikap: e.target.value})}></textarea>
+                    <textarea disabled={loading} placeholder="Teguran (Opsional)" rows="2" className="w-full p-3 os-input rounded-xl border-red-500/20" onChange={e => setForm({...form, teguran: e.target.value})}></textarea>
+                    <div className="bg-cyan-900/10 border border-cyan-500/20 p-3 rounded-xl">
+                        <label className="block text-cyan-400 text-xs font-bold mb-2 uppercase">Prestasi & Bintang</label>
+                        <div className="flex gap-2 mb-3 justify-center">{[1, 2, 3, 4, 5].map((s) => (<button key={s} onClick={(e) => { e.preventDefault(); setForm(p => ({...p, stars: s})); }} className="text-2xl"><i className={`${s <= form.stars ? 'fas text-[#FFD700]' : 'far text-slate-600'} fa-star`}></i></button>))}</div>
+                        <textarea disabled={loading} placeholder="Keterangan Prestasi" rows="2" className="w-full p-3 os-input rounded-xl text-sm" onChange={e => setForm({...form, prestasi: e.target.value})}></textarea>
+                    </div>
+                    <div><label className="block text-slate-400 text-xs mb-1 font-bold">Upload Media</label><input disabled={loading} type="file" className="w-full p-2 os-input rounded-xl text-xs" onChange={e => setFile(e.target.files[0])} /></div>
+                </div>
+                <div className="p-4 border-t border-white/10 flex gap-3"><button disabled={loading} onClick={onBack} className="flex-1 py-3 text-xs font-bold text-slate-400">BATAL</button><button onClick={handleSubmit} disabled={loading} className="flex-1 btn-green py-3 rounded-xl text-xs font-bold">{loading ? "MENGIRIM..." : "KIRIM EVALUASI"}</button></div>
+            </div>); 
+        }
+
+        function PelatihHistory({ user, onBack, onSelectHistory }) { 
+            const [history, setHistory] = useState([]); const [search, setSearch] = useState(''); const loadData = () => { setHistory([]); window.api.run('getCoachHistory', user.username).then(setHistory); }; useEffect(() => { loadData(); }, []); const filteredHistory = history.filter(h => h.paskibraka.toLowerCase().includes(search.toLowerCase()) || h.isi.toLowerCase().includes(search.toLowerCase())); 
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[80vh] flex flex-col overflow-hidden relative animate-in">
+                    <div className="p-4 border-b border-white/10 flex-none"><div className="flex items-center justify-between mb-4"><button onClick={onBack}><i className="fas fa-arrow-left text-white"></i></button><h3 className="font-black text-white text-sm">RIWAYAT SAYA</h3></div><input placeholder="Cari..." className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white" value={search} onChange={e => setSearch(e.target.value)} /></div>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">{filteredHistory.length === 0 ? <div className="text-center text-slate-500 py-4">Tidak ada data.</div> : filteredHistory.map((h, i) => (<div key={i} onClick={() => onSelectHistory(h)} className="p-4 bg-white/5 border border-white/5 rounded-xl text-sm cursor-pointer"><div className="text-[#FFD700] font-bold text-xs">{h.tanggal}</div><div className="font-black text-white text-sm mt-1">{h.paskibraka}</div></div>))}</div>
+                </div>
+            ); 
+        }
+
+        function PelatihHistoryDetail({ item, onBack, onPhotoClick }) { 
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[80vh] flex flex-col overflow-hidden animate-in">
+                    <div className="flex items-center gap-3 p-6 border-b border-white/10"><button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5"><i className="fas fa-arrow-left text-xs"></i></button><div><h3 className="font-black text-white">Kepada: {item.paskibraka}</h3><div className="text-xs text-[#FFD700]">{item.tanggal}</div></div></div>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                        <div className="p-4 bg-white/5 rounded-xl"><div className="text-[10px] text-blue-400 font-bold uppercase">TEHNIK</div><div className="text-sm text-white">{item.tehnik}</div></div>
+                        <div className="p-4 bg-white/5 rounded-xl"><div className="text-[10px] text-green-400 font-bold uppercase">SIKAP</div><div className="text-sm text-white">{item.sikap}</div></div>
+                        {item.teguran && item.teguran !== '-' && (<div className="p-4 bg-red-500/10 rounded-xl"><div className="text-[10px] text-red-400 font-bold">TEGURAN</div><div className="text-sm text-white">{item.teguran}</div></div>)}
+                        {item.prestasi && item.prestasi !== '-' && (<div className="p-4 bg-cyan-500/10 rounded-xl"><div className="text-[10px] text-cyan-400 font-bold">PRESTASI</div><div className="text-sm text-white">{item.prestasi}</div></div>)}
+                    </div>
+                </div>
+            ); 
+        }
+
+        function PaskibEvalDetail({ data, user, onBack, onPhotoClick }) {
+            const [replies, setReplies] = useState({}); const [input, setInput] = useState({}); useEffect(() => { data.list.forEach(item => { window.api.run('getReplies', item.id).then(res => setReplies(p => ({...p, [item.id]: res}))); }); }, [data]); const handleSendReply = async (evalId) => { const text = input[evalId]; if (!text) return; await window.api.run('submitReply', evalId, user.username, text); const newReplies = await window.api.run('getReplies', evalId); setReplies(p => ({...p, [evalId]: newReplies})); setInput(p => ({...p, [evalId]: ''})); }; 
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                    <div className="flex items-center gap-4 p-5 border-b border-white/10"><button onClick={onBack} className="w-10 h-10 rounded-full bg-white/5"><i className="fas fa-arrow-left text-sm"></i></button><div className="flex-1"><h3 className="font-black text-white">{data.display}</h3></div></div>
+                    <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-black/20">
+                        <div className="space-y-6 pb-10">
+                            {data.list.map((item, idx) => (
+                                <div key={idx} className="bg-[#0f1423]/60 border border-white/10 rounded-2xl relative overflow-hidden shadow-lg">
+                                    <div className="flex items-center gap-3 p-4 bg-white/5"><img src={item.fotoPelatih} className="w-11 h-11 rounded-full object-cover" /><div className="flex-1"><div className="text-white font-bold text-sm">{item.pelatih}</div></div></div>
+                                    <div className="p-5 space-y-3.5 text-sm text-slate-300">
+                                        <div className="p-3.5 bg-black/30 rounded-xl"><div className="text-[10px] text-blue-400 font-black mb-1.5">TEHNIK</div><div>{item.koreksiTehnik}</div></div>
+                                        <div className="p-3.5 bg-black/30 rounded-xl"><div className="text-[10px] text-green-400 font-black mb-1.5">SIKAP</div><div>{item.koreksiSikap}</div></div>
+                                        {item.media && (<button onClick={() => onPhotoClick(item.media, 'Lampiran', 'badge-base')} className="w-full text-center py-2.5 bg-blue-600/10 text-blue-400 text-xs rounded-xl font-bold">LIHAT LAMPIRAN</button>)}
+                                    </div>
+                                    <div className="bg-black/20 p-4 border-t border-white/5">
+                                        <div className="space-y-2 mb-4">{replies[item.id] && replies[item.id].length > 0 ? replies[item.id].map((r, i) => (<div key={i} className="text-xs bg-[#FFD700]/10 text-[#FFD700] p-3 rounded-xl">{r.text}</div>)) : <div className="text-[10px] text-slate-600">Belum ada balasan</div>}</div>
+                                        <div className="flex gap-2"><input type="text" placeholder="Balas..." className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white" value={input[item.id]||''} onChange={e => setInput({...input, [item.id]: e.target.value})} /><button onClick={() => handleSendReply(item.id)} className="bg-gradient-to-r from-[#D4AF37] to-[#b45309] w-9 h-9 rounded-xl flex items-center justify-center text-black"><i className="fas fa-paper-plane text-xs"></i></button></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function EditProfile({ user, role, onBack, onSuccess }) { 
+            const [pass, setPass] = useState(''); const [file, setFile] = useState(null); const [loading, setLoading] = useState(false);
+            const handleSave = () => { 
+                if (!pass && !file) return alert("Tidak ada perubahan"); setLoading(true);
+                const payload = { password: pass }; 
+                const send = (p) => { window.api.run('updateProfile', role, user.username, p).then(res => { setLoading(false); alert(res.message); if(res.status === 'success') onSuccess(pass); }); }; 
+                if(file) { const r = new FileReader(); r.onload = e => { payload.fotoData = e.target.result.split(',')[1]; payload.fotoMime = file.type; send(payload); }; r.readAsDataURL(file); } else send(payload); 
+            }; 
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                    <div className="p-6 pb-4 border-b border-white/10 bg-[#050505]/80 text-center"><h3 className="font-black text-white uppercase">EDIT PROFIL</h3></div>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                        <input disabled={loading} placeholder="Password Baru" type="password" className="w-full p-3 os-input rounded-xl text-sm" onChange={e => setPass(e.target.value)} />
+                        <div><label className="text-xs text-slate-400 mb-1 block font-bold">Ganti Foto Profil</label><input disabled={loading} type="file" className="w-full p-2 os-input rounded-xl text-xs" onChange={e => setFile(e.target.files[0])} /></div>
+                    </div>
+                    <div className="p-4 border-t border-white/10 bg-[#050505]/80 flex gap-3">
+                        <button disabled={loading} onClick={onBack} className="flex-1 py-3 text-xs font-bold text-slate-400">BATAL</button>
+                        <button onClick={handleSave} disabled={loading} className="flex-1 btn-gold py-3 rounded-xl text-xs font-bold">{loading ? "SIMPAN..." : "SIMPAN"}</button>
+                    </div>
+                </div>
+            ); 
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<PelatihApp />);
+    </script>
+</body>
+</html>
